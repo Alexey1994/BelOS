@@ -1,0 +1,70 @@
+#`push 0`
+
+#fact = factorial(8)
+#print_number([fact])
+
+#print_number(128)
+#print_number(129)
+
+
+process_data
+character
+command_address
+command
+
+print_null_terminated_bytes("Shell started.\r\nPlease type your command and press enter to execute.\r\n\r\n>")
+#0('>')
+
+command_address = &command
+
+`push %command% local_to_global set_data_address`
+`push 0 pop 3`
+
+loop: {
+	#if 5() {
+		character = 1()
+		
+		if character == 13 {
+			#print_null_terminated_bytes("\r\nYour input is: ")
+			#print_null_terminated_bytes(command_address)
+			
+			if [command_address] & 255 {
+				0(13)
+				0(10)
+			
+				process_data = 2(command_address)
+				
+				if process_data {
+					3()
+					
+					#0(13) 0(10)
+					#print_number(process_data)
+					#0(' ')
+				}
+				else {
+					print_null_terminated_bytes(command_address)
+					print_null_terminated_bytes(" not executed")
+				}
+			}
+			
+			`push %command% local_to_global set_data_address`
+			`push 0 pop 3`
+		
+			0(13)
+			0(10)
+			0('>')
+		}
+		else {
+			0(character)
+			
+			`pop 1`
+			`push %character% local_to_global load pop 3`
+			`push 0 pop 3`
+		}
+	#}
+	#else {
+	#	6(50)
+	#}
+	
+	@loop
+}

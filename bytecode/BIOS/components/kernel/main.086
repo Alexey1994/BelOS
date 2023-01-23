@@ -1,0 +1,71 @@
+`org 0x8000`
+
+`mov BP, SP`
+
+#EnableA20();
+`in AL, 0x92`
+`or AL, 0x02`
+`out 0x92, AL`
+
+current_time = 0
+memory_top = 1024 * 1024
+processes = 0
+
+clear_screen()
+
+
+`cli`
+
+`mov word [1Ch * 4], handle_time`
+`mov word [1Ch * 4 + 2], 0`
+
+#`mov EAX, [8h * 4]`
+#`mov [%old_time_handler%], EAX`
+
+#`mov word [8h * 4], handle_time`
+#`mov word [8h * 4 + 2], 0`
+
+`sti`
+
+
+`xor EBX, EBX` `mov BX, shell_path`
+`mov [%execute_arg0%], EBX`
+execute()
+
+if execute_return {
+	execute_processes()
+}
+else {
+	`xor EBX, EBX` `mov BX, shell_path`
+	`mov [%print_null_terminated_bytes_arg0%], EBX`
+	print_null_terminated_bytes()
+	
+	`xor EBX, EBX` `mov BX, shell_not_found`
+	`mov [%print_null_terminated_bytes_arg0%], EBX`
+	print_null_terminated_bytes()
+}
+
+
+`halt: hlt`
+`jmp halt`
+
+
+`handle_time:`
+`add dword [%current_time%], 55`
+
+#`mov EAX, [%old_time_handler%]`
+#`mov [old_time_handler_IP], EAX`
+
+#jmp CS:IP
+#`db 0xEA`
+#`old_time_handler_IP: dw 0`
+#`old_time_handler_CS: dw 0`
+
+#`mov AL, 0x20`
+#`out 0x20, AL`
+
+`iret`
+
+
+`shell_path: db "shell", 0`
+`shell_not_found: db " not found", 0`

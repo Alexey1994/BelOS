@@ -1,0 +1,1 @@
+"qemu\qemu.exe" -m 256 -no-reboot -hda "bin\storage"

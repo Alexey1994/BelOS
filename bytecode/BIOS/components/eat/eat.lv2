@@ -1,0 +1,67 @@
+x = 0
+y = 0
+
+vector = 1 #0 - top, 1 - right, 2 - bottom, 3 - left
+
+video_memory = 7()
+
+[video_memory] = 1 + 15 * 256
+
+loop: {
+	if 5() {
+		character = 1()
+		
+		if character == 27 {
+			4()
+		}
+		else if character == 'w' {
+			vector = 0
+		}
+		else if character == 'd' {
+			vector = 1
+		}
+		else if character == 's' {
+			vector = 2
+		}
+		else if character == 'a' {
+			vector = 3
+		}
+		else {
+			#print_number(character)
+			#0(13)
+			#0(10)
+		}
+	}
+	else {
+		
+	}
+	
+	6(50)
+	
+	[video_memory + (x + y * 80) * 2] = [video_memory + (x + y * 80) * 2] & 4294901760 | (7 * 256)
+	
+	if vector == 0 {
+		if y > 0 {
+			y = y - 1
+		}
+	}
+	else if vector == 1 {
+		if x < 79 {
+			x = x + 1
+		}
+	}
+	else if vector == 2 {
+		if y < 24 {
+			y = y + 1
+		}
+	}
+	else if vector == 3 {
+		if x > 0 {
+			x = x - 1
+		}
+	}
+	
+	[video_memory + (x + y * 80) * 2] = [video_memory + (x + y * 80) * 2] & 4294901760 | (1 + 7 * 256)
+
+	@loop
+}

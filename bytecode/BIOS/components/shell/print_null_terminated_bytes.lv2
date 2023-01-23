@@ -1,0 +1,11 @@
+from bytes
+
+repeat: {
+	character = [bytes] & 255
+
+	if character {
+		0(character)
+		bytes = bytes + 1
+		@repeat
+	}
+}

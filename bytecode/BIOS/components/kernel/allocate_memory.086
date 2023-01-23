@@ -1,0 +1,7 @@
+`mov EAX, [%0%]`
+`mov ECX, [%memory_top%]`
+`add [%memory_top%], EAX`
+`mov EBX, [%memory_top%]`
+`mov [EBX], ECX`
+`add dword [%memory_top%], 4`
+`mov [%allocate_memory_return%], ECX`

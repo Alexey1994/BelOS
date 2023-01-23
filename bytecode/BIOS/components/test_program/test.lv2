@@ -1,0 +1,6 @@
+print_number(128)
+4()
+
+#loop: {
+#	@loop
+#}

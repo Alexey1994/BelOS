@@ -1,0 +1,3 @@
+`mov AH, 0x0E`
+`mov AL, [%0%]`
+`int 0x10`

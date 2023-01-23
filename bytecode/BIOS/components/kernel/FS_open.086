@@ -1,0 +1,9 @@
+`%%define drive_number      8`
+`%%define loader_enumerator 6`
+`%%define open_root         4`
+`%%define enum_data         2`
+`%%define load_data         0`
+
+`mov DL, [BP + drive_number]`
+`mov SI, [BP + loader_enumerator]`
+`call [BP + open_root]`

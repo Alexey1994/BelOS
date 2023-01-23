@@ -1,0 +1,9 @@
+repeat: {
+	character = [print_null_terminated_bytes_arg0] & 255
+
+	if character {
+		print_char(character)
+		print_null_terminated_bytes_arg0 = print_null_terminated_bytes_arg0 + 1
+		@repeat
+	}
+}

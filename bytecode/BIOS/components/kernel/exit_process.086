@@ -1,0 +1,22 @@
+[exit_process_arg0 + 4] = 1
+
+previouse_process = processes
+
+if exit_process_arg0 == processes {
+	processes = [exit_process_arg0]
+}
+else {
+	while [previouse_process] != exit_process_arg0 {
+		previouse_process = [previouse_process]
+	}
+
+	[previouse_process] = [exit_process_arg0]
+}
+
+clean_memory(exit_process_arg0)
+
+current_process = processes
+
+if current_process {
+	[current_process + 4] = 0
+}

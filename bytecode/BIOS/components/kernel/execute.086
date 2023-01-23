@@ -1,0 +1,52 @@
+#process_path
+
+
+allocate_memory(36)
+new_process = allocate_memory_return
+
+FS_open()
+
+`test_next_file:`
+FS_enum()
+
+if FS_enum_return {
+	`mov EBX, [%0%]`
+	
+	`test_next_character:`
+	`mov CL, [EBX]`
+	`mov AL, [DI]`
+	`cmp AL, CL`
+	`jne test_next_file`
+	`cmp AL, 0`
+	`je load_process`
+	`inc DI`
+	`inc EBX`
+	`jmp test_next_character`
+	
+	`load_process:`
+	
+	allocate_memory(4096)
+	next_process_data = allocate_memory_return
+
+	[new_process]      = processes                              #next
+	[new_process + 4]  = 1                                      #state
+	[new_process + 8]  = next_process_data                      #program
+	[new_process + 12] = 1024                                   #program_size
+	[new_process + 16] = 4096                                   #allocated_program_size
+	[new_process + 20] = next_process_data                      #program_count
+	[new_process + 24] = next_process_data + 4096               #call_stack
+	[new_process + 28] = [new_process + 8] + [new_process + 12] #base
+	[new_process + 32] = [new_process + 28]                     #data_stack
+
+	processes = new_process
+	
+	FS_load(FS_enum_return, next_process_data)
+	
+	[new_process + 4] = 0
+	
+	execute_return = new_process
+}
+else {
+	clean_memory(new_process)
+	execute_return = 0
+}

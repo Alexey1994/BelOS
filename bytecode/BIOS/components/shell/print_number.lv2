@@ -1,0 +1,9 @@
+from n
+
+next_n, mod = n / 10
+
+if next_n {
+	print_number(next_n)
+}
+
+0(mod + '0')

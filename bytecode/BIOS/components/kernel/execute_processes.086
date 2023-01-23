@@ -1,0 +1,369 @@
+current_process = processes
+all_processes_waiting = 1
+	
+loop: {
+	if [current_process + 4] != 1 {
+		all_processes_waiting = 0
+
+		opcode = [[current_process + 20]] & 255
+		[current_process + 20] = [current_process + 20] + 1
+	
+		if opcode & 128 { #0b10000000, push/pop
+			if opcode & 64 { #0b01000000, pop
+				#current_process.data_stack -= opcode & 0b00111111
+				
+				[current_process + 32] = [current_process + 32] - (opcode & 63)
+			}
+			else { #push
+				push_value = opcode & 31 #0b00011111
+
+				if opcode & 32 { #0b00100000
+					while push_value {
+						#[current_process.data_stack] = [current_process.program_count]
+						#++current_process.data_stack
+						#++current_process.program_count
+						#--push_value
+						
+						[[current_process + 32]] = [[current_process + 20]]
+						[current_process + 32] = [current_process + 32] + 1
+						[current_process + 20] = [current_process + 20] + 1
+						push_value = push_value - 1
+					}
+				}
+				else {
+					#[current_process.data_stack] = push_value;
+					#current_process.data_stack += 4
+					
+					[[current_process + 32]] = push_value
+					[current_process + 32] = [current_process + 32] + 4
+				}
+			}
+		}
+		else {
+			if opcode == 1 { #SET_DATA_ADDRESS
+				#current_process.data_stack -= 4
+				#current_process.data_stack = current_process.program + [current_process.data_stack]
+				
+				[current_process + 32] = [current_process + 32] - 4
+				[current_process + 32] = [current_process + 8] + [[current_process + 32]]
+			}
+			else if opcode == 2 { #DUBLICATE
+				#top_program_value = current_process.data_stack - 4
+				#current_process.data_stack += 4
+				#[top_program_value + 4] = [top_program_value]
+				
+				top_program_value = [current_process + 32] - 4
+				[current_process + 32] = [current_process + 32] + 4
+				[top_program_value + 4] = [top_program_value]
+			}
+			else if opcode == 3 { #LOAD
+				#top_program_value = current_process.data_stack - 4
+				#[top_program_value] = [current_process.program + [top_program_value]]
+				
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [[current_process + 8] + [top_program_value]]
+			}
+			else if opcode == 4 { #STORE
+				#current_process.data_stack -= 8
+				#top_program_value = current_process.data_stack
+				#[current_process.program + [top_program_value + 4]] = [top_program_value]
+			
+				[current_process + 32] = [current_process + 32] - 8
+				top_program_value = [current_process + 32]
+				[[current_process + 8] + [top_program_value + 4]] = [top_program_value]
+			}
+			else if opcode == 5 { #LOCAL_TO_GLOBAL
+				#top_program_value = current_process.data_stack - 4
+				#[top_program_value] = current_process.base - current_process.program + [top_program_value]
+			
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [current_process + 28] - [current_process + 8] + [top_program_value]
+			}
+			else if opcode == 6 { #SYSTEM_CALL
+				#current_process.data_stack -= 4
+				#top_program_value = current_process.data_stack
+				#system_procedure_index = [top_program_value]
+				
+				#if system_procedure_index == 0 {
+				#	current_process.data_stack -= 4
+				#	print_char([current_process.data_stack])
+				#}
+				
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32]
+				system_procedure_index = [top_program_value]
+				
+				if system_procedure_index == 0 { #print_char
+					[current_process + 32] = [current_process + 32] - 4
+					print_char([[current_process + 32]])
+				}
+				else if system_procedure_index == 1 { #read_char
+					`hlt`
+					`mov AH, 0`
+					`int 16h`
+
+					`and EAX, 0xFF`
+					`mov EBX, [%top_program_value%]`
+					`mov [EBX], EAX`
+
+					[current_process + 32] = [current_process + 32] + 4
+				}
+				else if system_procedure_index == 2 { #execute
+					top_program_value = [current_process + 32] - 4
+					execute_path = [current_process + 8] + [top_program_value]
+					
+					execute(execute_path)
+					[top_program_value] = execute_return
+				}
+				else if system_procedure_index == 3 { #wait
+					[current_process + 4] = 1
+				}
+				else if system_procedure_index == 4 { #exit
+					exit_process(current_process)
+				}
+				else if system_procedure_index == 5 { #kbhit
+					`mov AH, 01h`
+					`int 16h`
+					`mov EBX, [%top_program_value%]`
+					`jnz kbhit_set`
+					`mov dword [EBX], 0`
+					`jmp skip_kbhit_set`
+					`kbhit_set: mov dword [EBX], 1`
+					`skip_kbhit_set:`
+					
+					[current_process + 32] = [current_process + 32] + 4
+				}
+				else if system_procedure_index == 6 { #sleep
+					[current_process + 32] = [current_process + 32] - 4
+					top_program_value = [current_process + 32]
+					
+					sleep_next_time = current_time + [top_program_value]
+					
+					while current_time < sleep_next_time {
+						`hlt`
+					}
+				}
+				else if system_procedure_index == 7 { #get_video_memory_address
+					[top_program_value] = 753664 - [current_process + 8]
+					[current_process + 32] = [current_process + 32] + 4
+				}
+			}
+			else if opcode == 7 { #BEGIN_CALL
+				#current_process.stack -= 4
+				#[current_process.stack] = current_process.data_stack
+			
+				[current_process + 24] = [current_process + 24] - 4
+				[[current_process + 24]] = [current_process + 32]
+			}
+			else if opcode == 8 { #CALL
+				#current_process.data_stack -= 4
+				#top_program_value = current_process.data_stack
+				
+				#old_base = current_process.base
+				
+				#current_process.base = [current_process.stack]
+
+				#[current_process.stack] = current_process.program_count
+				
+				#current_process.stack -= 4
+				#[current_process.stack] = old_base
+				
+				#current_process.program_count = current_process.program + [top_program_value]
+				
+
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32]
+				
+				old_base = [current_process + 28]
+				
+				[current_process + 28] = [[current_process + 24]]
+				
+				[[current_process + 24]] = [current_process + 20]
+				
+				[current_process + 24] = [current_process + 24] - 4
+				[[current_process + 24]] = old_base
+				
+				[current_process + 20] = [current_process + 8] + [top_program_value]
+			}
+			else if opcode == 9 { #RETURN
+				#current_process.base = [current_process.call_stack]
+				#current_process.call_stack += 4
+				
+				#current_process.program_count = [current_process.call_stack]
+				#current_process.call_stack += 4
+				
+				[current_process + 28] = [[current_process + 24]]
+				[current_process + 24] = [current_process + 24] + 4
+				
+				[current_process + 20] = [[current_process + 24]]
+				[current_process + 24] = [current_process + 24] + 4
+			}
+			else if opcode == 10 { #RETURN_LINK
+				#[current_process.data_stack] = current_process.base - current_process.program
+				#current_process.data_stack += 4
+
+				#current_process.base = [current_process.call_stack]
+				#current_process.call_stack += 4
+				
+				#current_process.program_count = [current_process.call_stack]
+				#current_process.call_stack += 4
+				
+				[[current_process + 32]] = [current_process + 28] - [current_process + 8]
+				[current_process + 32] = [current_process + 32] + 4
+
+				[current_process + 28] = [[current_process + 24]]
+				[current_process + 24] = [current_process + 24] + 4
+				
+				[current_process + 20] = [[current_process + 24]]
+				[current_process + 24] = [current_process + 24] + 4
+			}
+			else if opcode == 11 { #JUMP
+				#current_process.data_stack -= 4
+				#top_program_value = current_process.data_stack
+				#current_process.program_count = current_process.program + [top_program_value]
+			
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32]
+				[current_process + 20] = [current_process + 8] + [top_program_value]
+			}
+			else if opcode == 12 { #JUMP_IF_ZERO
+				#current_process.data_stack -= 8
+				#top_program_value = current_process.data_stack
+
+				#if [top_program_value] {
+				#
+				#}
+				#else {
+				#	current_process.program_count = current_process.program + [top_program_value + 4]
+				#}
+				
+				[current_process + 32] = [current_process + 32] - 8
+				top_program_value = [current_process + 32]
+
+				if [top_program_value] {
+				
+				}
+				else {
+					[current_process + 20] = [current_process + 8] + [top_program_value + 4]
+				}
+			}
+			else if opcode == 13 { #JUMP_IF_NOT_ZERO
+				[current_process + 32] = [current_process + 32] - 8
+				top_program_value = [current_process + 32]
+
+				if [top_program_value] {
+					[current_process + 20] = [current_process + 8] + [top_program_value + 4]
+				}
+				else {
+					
+				}
+			}
+			else if opcode == 14 { #BINARY_NOT
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = ~[top_program_value]
+			}
+			else if opcode == 15 { #BINARY_SHIFT_LEFT
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] << [top_program_value + 4]
+			}
+			else if opcode == 16 { #BINARY_SHIFT_RIGHT
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] >> [top_program_value + 4]
+			}
+			else if opcode == 17 { #BINARY_OR
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] | [top_program_value + 4]
+			}
+			else if opcode == 18 { #BINARY_AND
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] & [top_program_value + 4]
+			}
+			else if opcode == 19 { #ARITHMETIC_NEG
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = -[top_program_value]
+			}
+			else if opcode == 20 { #ARITHMETIC_ADD
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] + [top_program_value + 4]
+			}
+			else if opcode == 21 { #ARITHMETIC_SUB
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] - [top_program_value + 4]
+			}
+			else if opcode == 22 { #ARITHMETIC_MUL
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] * [top_program_value + 4]
+			}
+			else if opcode == 23 { #ARITHMETIC_DIV
+				top_program_value = [current_process + 32] - 8
+				top_program_value_a = [top_program_value]
+				top_program_value_b = [top_program_value + 4]
+
+				`mov EAX, [%top_program_value_a%]`
+				`mov EBX, [%top_program_value_b%]`
+				`xor EDX, EDX`
+				`div EBX`
+				`mov EBX, [%top_program_value%]`
+				`mov [EBX], EAX`
+				`mov [EBX + 4], EDX`
+				
+				#[top_program_value] = top_program_value_a / top_program_value_b
+				#[top_program_value + 4] = top_program_value_a % top_program_value_b
+			}
+			else if opcode == 24 { #EQUAL
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] == [top_program_value + 4]
+			}
+			else if opcode == 25 { #NOT_EQUAL
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] != [top_program_value + 4]
+			}
+			else if opcode == 26 { #LESSER
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] < [top_program_value + 4]
+			}
+			else if opcode == 27 { #LESSER_OR_EQUAL
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] <= [top_program_value + 4]
+			}
+			else if opcode == 28 { #GREATER
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] > [top_program_value + 4]
+			}
+			else if opcode == 29 { #GREATER_OR_EQUAL
+				[current_process + 32] = [current_process + 32] - 4
+				top_program_value = [current_process + 32] - 4
+				[top_program_value] = [top_program_value] >= [top_program_value + 4]
+			}
+			else {
+				print_char(2)
+				[current_process + 4] = 1
+			}
+		}
+	}
+
+	current_process = [current_process]
+		
+	while current_process == 0 {
+		while all_processes_waiting {
+			`hlt`
+		}
+			
+		current_process = processes
+		all_processes_waiting = 1
+	}
+		
+	@loop
+}

@@ -1,0 +1,7 @@
+`mov EAX, [%0%]`
+`mov [%memory_top%], EAX`
+
+#`mov EBX, [%0%]`
+#`sub EBX, 4`
+#`mov EAX, [EBX]`
+#`mov [%memory_top%], EAX`

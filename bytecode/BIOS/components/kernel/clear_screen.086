@@ -1,0 +1,5 @@
+i = 0
+while i < 80 * 25 {
+	print_char(32)
+	i = i + 1
+}

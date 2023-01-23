@@ -1,0 +1,11 @@
+FS_open()
+FS_enum()
+FS_enum()
+data = 131072
+FS_load(FS_enum_return, data)
+
+i = 0
+while i < 60 {
+	print_char([data + i])
+	i = i + 1
+}

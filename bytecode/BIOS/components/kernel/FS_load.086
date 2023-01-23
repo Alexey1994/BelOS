@@ -1,0 +1,4 @@
+`mov SI, [BP + loader_enumerator]`
+`mov EAX, [%0%]`
+`mov EDI, [%1%]`
+`call [BP + load_data]`

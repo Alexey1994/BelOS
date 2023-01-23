@@ -1,0 +1,3 @@
+`mov SI, [BP + loader_enumerator]`
+`call [BP + enum_data]`
+`mov [%FS_enum_return%], EAX`

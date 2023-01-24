@@ -1,0 +1,1 @@
+@tcc32 -w "-Icomponents/global" -nostdlib "components/%1/main.c" api.def -o "bin/components/%1.exe"

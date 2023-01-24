@@ -3,6 +3,7 @@
 
 
 #include "init.c"
+#include <string.c>
 
 
 Boolean enum_FAT_data(FAT_File_System* fs, File_Enumerator* enumerator)
@@ -29,19 +30,7 @@ Boolean enum_FAT_data(FAT_File_System* fs, File_Enumerator* enumerator)
 		}
 	}
 	
-	//print("enum_FAT_data %s\n", enumerator->file_data->name);
-	
 	return enumerator->file_data->name[0];
-}
-
-
-Byte to_upper_case(Byte c)
-{
-	if(c >= 'a' && c <= 'z') {
-		c = c + 'A' - 'a';
-	}
-	
-	return c;
 }
 
 

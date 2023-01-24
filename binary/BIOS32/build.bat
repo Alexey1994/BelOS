@@ -7,13 +7,13 @@
 	&& load "bin/components/kernel16" | to ld > "bin/components/kernel16.ld" ^
 	&& ld -T kernel_script.ld -o "bin/components/kernel32.o" "bin/components/kernel32.elf" ^
 	&& objcopy -O binary -S "bin/components/kernel32.o" "bin/components/kernel" ^
-	&& build_program.bat "test" ^
 	&& build_program.bat "ls" ^
 	&& build_program.bat "cat" ^
 	&& build_program.bat "reset" ^
+	&& build_EXE_program.bat "test" ^
 	&& create MBR 2097664 "bin/components/MBR" > "bin/storage" && create FAT32 "bin/storage" "bin/components/FAT32" ^
 		"bin/components/kernel" "KERNEL" ^
-		"bin/components/test" "TEST    COM" ^
+		"bin/components/test.exe" "TEST    EXE" ^
 		"bin/components/ls" "LS      COM" ^
 		"bin/components/cat" "CAT     COM" ^
 		"bin/components/reset" "RESET   COM" ^

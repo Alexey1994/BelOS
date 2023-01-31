@@ -1,4 +1,13 @@
+#include "FAT/read.c"
+
+
 FAT_File_System fs;
+
+
+void open_root()
+{
+	open_FAT_File_System(&fs, loader_api->read_sector);
+}
 
 
 Boolean enum_files(File_Enumerator* enumerator)

@@ -7,9 +7,6 @@
 
 
 typedef struct {
-	Byte* command_line;
-	
-	
 	void    (*print)            (Byte* parameters, ...);
 	
 	Boolean (*enum_files)       (File_Enumerator* enumerator);
@@ -17,6 +14,9 @@ typedef struct {
 	Number  (*read_file_sector) (FAT_Data* file, Byte* sector);
 	
 	void    (*reset)            ();
+	
+	Number number_of_arguments;
+	Byte*  arguments[256];
 }
 API;
 

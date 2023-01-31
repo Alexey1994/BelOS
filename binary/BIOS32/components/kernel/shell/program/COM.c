@@ -14,14 +14,9 @@ Boolean execute_COM_program(Byte* name, Byte* command_line)
 		program += 512;
 	}
 	
-	API api = {
-		.command_line = command_line,
-		.print = &print,
-		.enum_files = &enum_files,
-		.open_file = &open_file,
-		.read_file_sector = &read_file_sector,
-		.reset = reset,
-	};
+	API api;
+
+	initialize_program_api(&api);
 
 	program_start(&api);
 	

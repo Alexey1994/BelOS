@@ -177,6 +177,13 @@ void write_character_in_bytes(Byte** source, Number character)
 }
 
 
+void print_in_string(Byte* s, Byte* parameters, ...)
+{
+	print_in_source(&s, &write_character_in_bytes, parameters, &parameters + 1);
+	write_character_in_bytes(&s, '\0');
+}
+
+
 #endif//WRITER_INCLUDED
 
 /*

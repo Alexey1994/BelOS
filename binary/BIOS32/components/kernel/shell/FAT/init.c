@@ -110,8 +110,6 @@ Number32 next_FAT_cluster(FAT_File_System* fs, Number32 current_cluster)
 
 void read_FAT_sector(FAT_File_System* fs, Number32 cluster_number, Byte* sector, Number32 offset)
 {
-	//print("{%d}", fs->sectors_in_cluster);
-	
 	if(!fs->read_sector(fs->data_start_sector + (cluster_number - 2) * fs->sectors_in_cluster + offset, sector)) {
 		print("read_FAT_sector error\n");
 	}

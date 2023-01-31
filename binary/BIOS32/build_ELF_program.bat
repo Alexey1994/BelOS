@@ -1,1 +1,1 @@
-@tcc32 -w "-Icomponents/global" -nostdlib -c "components/%1/main.c" -o "bin/components/%1.elf"
+@tcc32 -w "-Icomponents/global" -nostdlib -c "components/programs/%1/main.c" -o "bin/components/%1.elf"

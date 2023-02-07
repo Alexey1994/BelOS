@@ -50,6 +50,7 @@ lgdt [GDT_pointer]
 call switch_to_32_bit
 use32
 
+push set_video_mode
 push reset
 push read_sector
 push clean_interrupt_handler
@@ -653,6 +654,30 @@ reset:
 	
 	call switch_to_32_bit
 	use32
+	
+	ret
+
+
+%define VESA_framebuffer 0x0500
+
+use32
+set_video_mode:
+	call switch_to_16_bit
+	use16
+	
+	mov AX, 0x4F02
+	mov BX, 0x4112 ;0x4105 ;1024x768x256
+	int 10h
+	
+	mov AX, 0x4F01
+	mov CX, 0x4112 ;0x4105 ;1024x768x256
+	mov DI, VESA_framebuffer
+	int 10h
+	
+	call switch_to_32_bit
+	use32
+	
+	mov EAX, VESA_framebuffer;[VESA_framebuffer + 40]
 	
 	ret
 

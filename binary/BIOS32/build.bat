@@ -7,14 +7,13 @@
 	&& load "bin/components/kernel16" | to ld > "bin/components/kernel16.ld" ^
 	&& ld -T kernel_script.ld -o "bin/components/kernel32.o" "bin/components/kernel32.elf" ^
 	&& objcopy -O binary -S "bin/components/kernel32.o" "bin/components/kernel" ^
-	&& build_COM_program.bat "help" ^
 	&& build_COM_program.bat "print" ^
 	&& build_COM_program.bat "reset" ^
 	&& build_EXE_program.bat "test" ^
 	&& create MBR 2097664 "bin/components/MBR" > "bin/storage" && create FAT32 "bin/storage" "bin/components/FAT32" ^
 		"bin/components/kernel" "KERNEL" ^
 		"bin/components/test.exe" "TEST    EXE" ^
-		"bin/components/help" "HELP    COM" ^
+		"components/programs/NES/NES.exe" "NES     EXE" ^
 		"bin/components/print" "PRINT   COM" ^
 		"bin/components/reset" "RESET   COM" ^
 	&& "qemu\qemu.exe" -m 256 -no-reboot -hda "bin\storage" ^

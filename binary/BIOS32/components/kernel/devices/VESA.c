@@ -1,9 +1,13 @@
-#ifndef API_INCLUDED
-#define API_INCLUDED
-
-
-#include "types.c"
-#include "file.c"
+typedef struct
+{
+	Byte     signature[4];
+	Number16 version;
+	Number32 oem_string;
+	Number32 capabilities;
+	Number32 video_modes;
+	Number16 total_memory;
+}
+VESA_Info;
 
 
 typedef struct
@@ -46,26 +50,3 @@ typedef struct
 }
 VESA_Mode_Info;
 
-
-typedef struct {
-	void    (*write_character_in_console) (Byte* console, Number character);
-	void    (*print)            (Byte* parameters, ...);
-	
-	Boolean (*enum_files)       (File_Enumerator* enumerator);
-	Boolean (*open_file)        (FAT_Data* file, Byte* name);
-	Number  (*read_file_sector) (FAT_Data* file, Byte* sector);
-	
-	void    (*sleep)            (Number milliseconds);
-	void    (*exit)             (Number code);
-	
-	void    (*reset)            ();
-	
-	VESA_Mode_Info* (*set_video_mode)   ();
-	
-	Number number_of_arguments;
-	Byte*  arguments[256];
-}
-API;
-
-
-#endif//API_INCLUDED

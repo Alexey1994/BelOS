@@ -6,6 +6,8 @@ typedef struct {
 	void    (*clean_interrupt_handler) (Number32 interrupt_number);
 	Boolean (*read_sector)             (Number32 start_sector, Byte*  sector);
 	void    (*reset)                   ();
+	
+	Byte*   (*set_video_mode)          ();
 }
 Loader_Api;
 

@@ -2,7 +2,7 @@
 #define STRING_INCLUDED
 
 
-#include <types.c>
+#include "types.c"
 
 
 Byte to_upper_case(Byte c)

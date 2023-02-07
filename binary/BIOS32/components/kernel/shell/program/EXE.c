@@ -121,19 +121,13 @@ typedef union {
 PE_Import_Lookup_Table;
 
 
-Boolean execute_EXE_program(Byte* name, Byte* command_line)
+Boolean execute_EXE_program(FAT_Data* file, API* api)
 {
 	Byte*    program;
-	void   (*program_start)(API* api);
-	FAT_Data file;
 
-	program_start = program = 1024 * 1024;
+	program = 1024 * 1024;
 	
-	if(!open_FAT_file(&fs,  &file, name)) {
-		return 0;
-	}
-	
-	if(!read_FAT_file_sector(&fs, &file, program)) {
+	if(!read_FAT_file_sector(&fs, file, program)) {
 		return 0;
 	}
 	
@@ -148,7 +142,7 @@ Boolean execute_EXE_program(Byte* name, Byte* command_line)
 	Number j;
 
 	mz_header = program;
-	
+
 	if(
 		mz_header->signature[0] != 'M' ||
 		mz_header->signature[1] != 'Z'
@@ -183,7 +177,7 @@ Boolean execute_EXE_program(Byte* name, Byte* command_line)
 	
 	program += 512;
 	for(i = 0; i < pe_optional_header->size_of_headers / 512 - 1; ++i) {
-		if(!read_FAT_file_sector(&fs, &file, program)) {
+		if(!read_FAT_file_sector(&fs, file, program)) {
 			return 0;
 		}
 		
@@ -208,7 +202,7 @@ Boolean execute_EXE_program(Byte* name, Byte* command_line)
 		//TODO: rewind file to pe_section_header[i].raw_data
 		
 		for(j = 0; j < pe_section_header[i].raw_size; j += 512) {
-			if(!read_FAT_file_sector(&fs, &file, program)) {
+			if(!read_FAT_file_sector(&fs, file, program)) {
 				return 0;
 			}
 			
@@ -216,16 +210,18 @@ Boolean execute_EXE_program(Byte* name, Byte* command_line)
 		}
 	}
 	
-	
-	API api;
 
-	initialize_program_api(&api);
-	
 	//TODO: handle import directory
 	
-	program_start = pe_optional_header->image_base + pe_optional_header->entry_point;
+	//program_start = pe_optional_header->image_base + pe_optional_header->entry_point;
 	
-	program_start(&api);
+	/*asm("mov %esp, old_stack");
+	asm("mov %esp, 1024 * 1024 * 256");
+	//print("%d\n", old_stack);
+	program_start(api);
+	asm("mov old_stack, %esp");*/
+	
+	execute(pe_optional_header->image_base + pe_optional_header->entry_point, api);
 	
 	return 1;
 }

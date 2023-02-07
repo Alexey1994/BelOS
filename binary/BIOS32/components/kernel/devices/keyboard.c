@@ -398,9 +398,9 @@ Boolean pressed_shift_key = 0;
 asm (
 	"pusha \n"
 	"call interrupt_33_handler\n"
-	"popa \n"
 	"mov $0x20, %al \n"
 	"out %al, $0x20 \n"
+	"popa \n"
 	"iret"
 );
 void interrupt_33_handler()

@@ -1,24 +1,19 @@
-Boolean execute_COM_program(Byte* name, Byte* command_line)
+Boolean execute_COM_program(FAT_Data* file, API* api)
 {
 	Byte*    program;
-	void   (*program_start)(API* api);
-	FAT_Data file;
+	//void   (*program_start)(API* api);
 
-	program_start = program = 1024 * 1024;
+	//program_start = program = 1024 * 1024;
 	
-	if(!open_FAT_file(&fs,  &file, name)) {
-		return 0;
-	}
+	program = 1024 * 1024;
 	
-	while(read_FAT_file_sector(&fs, &file, program)) {
+	while(read_FAT_file_sector(&fs, file, program)) {
 		program += 512;
 	}
+
+	//program_start(api);
 	
-	API api;
-
-	initialize_program_api(&api);
-
-	program_start(&api);
+	execute(1024 * 1024, api);
 	
 	return 1;
 }

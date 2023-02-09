@@ -2,7 +2,31 @@
 
 
 Number32 kernel_stack;
+Number32 kernel_base;
 Number32 program_stack = 128 * 1024 * 1024;
+
+
+void execute(void(*start)(API* api), API* api)
+{
+	
+	asm("mov %esp, kernel_stack");
+	asm("mov %ebp, kernel_base");
+	//asm("mov %esp, program_stack");
+
+	start(api);
+	asm("return_address:");
+
+	loader_api->set_text_mode();
+}
+
+
+void exit(Number code)
+{
+	asm("mov kernel_stack, %esp");
+	asm("mov kernel_base, %ebp");
+	
+	asm("jmp return_address");
+}
 
 
 void parse_program_arguments(API* api, Byte* command_line)
@@ -29,28 +53,6 @@ void parse_program_arguments(API* api, Byte* command_line)
 }
 
 
-Number return_address;
-
-void exit(Number code)
-{
-	//asm("jmp return_address")
-	
-	for(;;) {
-		asm("hlt");
-	}
-}
-
-
-void execute(void(*start)(API* api), API* api)
-{
-	//asm("mov %esp, kernel_stack");
-	//asm("mov %esp, program_stack");
-	//print("%d\n", kernel_stack);
-	start(api);
-	//asm("mov kernel_stack, %esp");
-}
-
-
 void initialize_program_api(API* api)
 {
 	api->write_character_in_console = &write_character_in_console;
@@ -62,9 +64,19 @@ void initialize_program_api(API* api)
 	api->sleep            = &sleep;
 	api->exit             = &exit;
 	
-	api->set_video_mode   = loader_api->set_video_mode;
-	
 	api->reset            = loader_api->reset;
+
+	api->get_number_of_video_modes     = &get_number_of_video_modes;
+	api->get_video_mode_width          = &get_video_mode_width;
+	api->get_video_mode_pitch          = &get_video_mode_pitch;
+	api->get_video_mode_height         = &get_video_mode_height;
+	api->get_video_mode_bits_per_pixel = &get_video_mode_bits_per_pixel;
+	api->get_video_mode_framebuffer    = &get_video_mode_framebuffer;
+	api->set_video_mode                = &set_video_mode;
+	api->set_text_mode                 = loader_api->set_text_mode;
+
+	api->set_key_down_handler = &set_key_down_handler;
+	api->set_key_up_handler   = &set_key_up_handler;
 	
 	parse_program_arguments(api, command);
 }

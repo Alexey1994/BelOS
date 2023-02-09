@@ -4,7 +4,7 @@ org 0x8000
 mov AX, CS
 mov DS, AX
 mov SS, AX
-mov SP, 0x10000 - 4
+mov SP, 0xFFFF ;0x10000 - 4
 
 
 ;clear_screen
@@ -50,7 +50,10 @@ lgdt [GDT_pointer]
 call switch_to_32_bit
 use32
 
-push set_video_mode
+push set_text_mode
+push set_VESA_mode
+push get_VESA_mode_info
+push get_VESA_Info
 push reset
 push read_sector
 push clean_interrupt_handler
@@ -202,269 +205,9 @@ GDT_pointer:
 
 align 16
 IDT:
+	%rep 256
 	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
-	Trap_Desc empty_interrupt_handler, 8, 0x8E
+	%endrep
 	
 
 IDT_pointer:
@@ -658,27 +401,90 @@ reset:
 	ret
 
 
-%define VESA_framebuffer 0x0500
+VESA_mode: dw 0
+VESA_mode_info: dd 0;times 256 db 0
+;VESA_Info: times 20 db 0
+;VESA_CRTC_info: times 64 db 0
+%define VESA_Info 0x500
+%define VESA_CRTC_info 0x500
+;%define VESA_mode_info 0x500
+
 
 use32
-set_video_mode:
+get_VESA_Info:
 	call switch_to_16_bit
 	use16
 	
-	mov AX, 0x4F02
-	mov BX, 0x4112 ;0x4105 ;1024x768x256
-	int 10h
-	
-	mov AX, 0x4F01
-	mov CX, 0x4112 ;0x4105 ;1024x768x256
-	mov DI, VESA_framebuffer
+	mov AX, 0x4F00
+	mov DI, VESA_Info
 	int 10h
 	
 	call switch_to_32_bit
 	use32
 	
-	mov EAX, VESA_framebuffer;[VESA_framebuffer + 40]
+	mov EAX, VESA_Info
 	
+	ret
+
+
+use32
+get_VESA_mode_info:
+	mov EAX, [ESP + 4]
+	mov [VESA_mode_info], EAX
+	
+	mov EAX, [ESP + 8]
+	mov [VESA_mode], AX
+	
+	call switch_to_16_bit
+	use16
+	
+	mov AX, 0x4F01
+	mov CX, [VESA_mode]
+	mov DI, [VESA_mode_info]
+	int 10h
+	
+	call switch_to_32_bit
+	use32
+	
+	ret
+
+
+use32
+set_VESA_mode:
+	mov EAX, [ESP + 4]
+	mov [VESA_mode], AX
+	
+	call switch_to_16_bit
+	use16
+	
+	mov AX, 0x4F02
+	mov BX, [VESA_mode]
+	mov DI, VESA_CRTC_info
+	int 10h
+	
+	call switch_to_32_bit
+	use32
+	
+	ret
+
+
+use32
+set_text_mode:
+	call switch_to_16_bit
+	use16
+	
+	mov AH, 0
+	mov AL, 3 | 0b10000000
+	int 10h
+	
+	;mov AX, 0x4F02
+	;mov BX, 0x4108
+	;mov DI, VESA_CRTC_info
+	;int 10h
+	
+	call switch_to_32_bit
+	use32
+
 	ret
 
 

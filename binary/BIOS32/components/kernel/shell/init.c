@@ -4,8 +4,21 @@ Byte command[256];
 Number command_size = 0;
 
 
+void set_key_down_handler(void(*key_down_handler)(Byte key_code, Boolean is_special))
+{
+	on_key_down_handler = key_down_handler;
+}
+
+
+void set_key_up_handler(void(*key_up_handler)(Byte key_code, Boolean is_special))
+{
+	on_key_up_handler = key_up_handler;
+}
+
+
 #include "file.c"
-#include "program/api.c"
+#include "video.c"
+#include "program/init.c"
 #include "program/COM.c"
 #include "program/EXE.c"
 #include "command.c"
@@ -15,6 +28,25 @@ Number command_size = 0;
 void start_shell(Loader_Api* api)
 {
 	loader_api = api;
+	
+	
+	/*VESA_Info*     info;
+	Number16*      modes;
+	VESA_Mode_Info mode_info;
+	Number         i;
+	
+	info = loader_api->get_VESA_Info();
+	modes = info->video_modes;
+	
+	for(i = 0; modes[i] != 0xFFFF; ++i) {
+		loader_api->get_VESA_mode_info(&mode_info, modes[i] | 0x4000);
+		print("%d %d %d\n", mode_info.width, mode_info.height, mode_info.bpp);
+	}
+	
+	loader_api->set_VESA_mode(modes[0] | 0x4000);
+	
+	return;*/
+	
 	
 	open_root();
 	
@@ -28,12 +60,4 @@ void start_shell(Loader_Api* api)
 	console_text_color = 10;
 	print(">");
 	console_text_color = 15;
-	
-	/*VESA_Mode_Info* screen = api->set_video_mode();
-	Number i;
-	for(i = 0; i < 2; ++i) {
-		((Byte*)screen->framebuffer)[i] = 14;
-		
-		//sleep(1);
-	}*/
 }

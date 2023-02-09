@@ -213,14 +213,6 @@ Boolean execute_EXE_program(FAT_Data* file, API* api)
 
 	//TODO: handle import directory
 	
-	//program_start = pe_optional_header->image_base + pe_optional_header->entry_point;
-	
-	/*asm("mov %esp, old_stack");
-	asm("mov %esp, 1024 * 1024 * 256");
-	//print("%d\n", old_stack);
-	program_start(api);
-	asm("mov old_stack, %esp");*/
-	
 	execute(pe_optional_header->image_base + pe_optional_header->entry_point, api);
 	
 	return 1;

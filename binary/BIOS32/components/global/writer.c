@@ -185,24 +185,3 @@ void print_in_string(Byte* s, Byte* parameters, ...)
 
 
 #endif//WRITER_INCLUDED
-
-/*
-#include <Windows/msvcrt.c>
-
-
-Number main(Number number_of_arguments, Byte** arguments)
-{
-	Byte bytes[128];
-	
-	Byte* source = bytes;
-	
-	write_Number(&source, &write_character_in_bytes, 12345);
-	write_character_in_bytes(&source, ' ');
-	write_Number_triplets(&source, &write_character_in_bytes, 12345, 0);
-	write_character_in_bytes(&source, ' ');
-	write_character_in_bytes(&source, '\0');
-
-	printf(bytes);
-	
-	return 0;
-}*/

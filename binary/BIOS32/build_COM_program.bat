@@ -1,3 +1,3 @@
 @tcc32 -w "-Icomponents/global" -nostdlib -c "components/programs/%1/main.c" -o "bin/components/%1.elf" ^
-	&& ld -T program_script.ld -o "bin/components/%1.o" "bin/components/%1.elf" ^
+	&& ld -T COM_program_script.ld -o "bin/components/%1.o" "bin/components/%1.elf" ^
 	&& objcopy -O binary -S "bin/components/%1.o" "bin/components/%1"

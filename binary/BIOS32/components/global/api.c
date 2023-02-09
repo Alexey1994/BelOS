@@ -3,48 +3,8 @@
 
 
 #include "types.c"
+#include "keyboard.c"
 #include "file.c"
-
-
-typedef struct
-{
-	Number16 attributes;
-	Number8  window_a;
-	Number8  window_b;
-	Number16 granularity;
-	Number16 window_size;
-	Number16 segment_a;
-	Number16 segment_b;
-	Number32 win_func_ptr;
-	Number16 pitch;
-	Number16 width;
-	Number16 height;
-	Number8  w_char;
-	Number8  y_char;
-	Number8  planes;
-	Number8  bpp;
-	Number8  banks;
-	Number8  memory_model;
-	Number8  bank_size;
-	Number8  image_pages;
-	Number8  reserved0;
- 
-	Number8  red_mask;
-	Number8  red_position;
-	Number8  green_mask;
-	Number8  green_position;
-	Number8  blue_mask;
-	Number8  blue_position;
-	Number8  reserved_mask;
-	Number8  reserved_position;
-	Number8  direct_color_attributes;
- 
-	Number32 framebuffer;
-	Number32 off_screen_mem_off;
-	Number16 off_screen_mem_size;
-	Number8  reserved1[206];
-}
-VESA_Mode_Info;
 
 
 typedef struct {
@@ -60,7 +20,20 @@ typedef struct {
 	
 	void    (*reset)            ();
 	
-	VESA_Mode_Info* (*set_video_mode)   ();
+	//void* (*get_video_mode)   (Number index);
+	//void  (*set_video_mode)   (Number index);
+	
+	Number  (*get_number_of_video_modes)     ();
+	Number  (*get_video_mode_width)          (Number video_mode_index);
+	Number  (*get_video_mode_pitch)          (Number video_mode_index);
+	Number  (*get_video_mode_height)         (Number video_mode_index);
+	Number  (*get_video_mode_bits_per_pixel) (Number video_mode_index);
+	void*   (*get_video_mode_framebuffer)    (Number video_mode_index);
+	Boolean (*set_video_mode)                (Number video_mode_index);
+	void    (*set_text_mode)                 ();
+	
+	void (*set_key_down_handler) (void(*key_down_handler)(Byte key_code, Boolean is_special));
+	void (*set_key_up_handler) (void(*key_up_handler)(Byte key_code, Boolean is_special));
 	
 	Number number_of_arguments;
 	Byte*  arguments[256];

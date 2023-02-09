@@ -1,10 +1,14 @@
+#ifndef VESA_INCLUDED
+#define VESA_INCLUDED
+
+
 typedef struct
 {
-	Byte     signature[4];
+	Byte     signature[4]; //VESA
 	Number16 version;
 	Number32 oem_string;
 	Number32 capabilities;
-	Number32 video_modes;
+	Number32 video_modes; //Number16*
 	Number16 total_memory;
 }
 VESA_Info;
@@ -50,3 +54,5 @@ typedef struct
 }
 VESA_Mode_Info;
 
+
+#endif//VESA_INCLUDED

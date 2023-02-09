@@ -7,7 +7,10 @@ typedef struct {
 	Boolean (*read_sector)             (Number32 start_sector, Byte*  sector);
 	void    (*reset)                   ();
 	
-	Byte*   (*set_video_mode)          ();
+	void*   (*get_VESA_Info)           ();
+	void    (*get_VESA_mode_info)      (void* mode_info, Number16 mode);
+	void    (*set_VESA_mode)           (Number16 mode);
+	void    (*set_text_mode)           ();
 }
 Loader_Api;
 
@@ -23,6 +26,7 @@ void _start(Loader_Api api)
 
 #include "interfaces/IO.c"
 #include "devices/timer.c"
+#include "devices/VESA.c"
 #include "devices/keyboard.c"
 #include "devices/console.c"
 

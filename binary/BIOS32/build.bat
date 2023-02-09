@@ -9,6 +9,7 @@
 	&& objcopy -O binary -S "bin/components/kernel32.o" "bin/components/kernel" ^
 	&& build_COM_program.bat "print" ^
 	&& build_COM_program.bat "reset" ^
+	&& build_COM_program.bat "video" ^
 	&& build_EXE_program.bat "test" ^
 	&& create MBR 2097664 "bin/components/MBR" > "bin/storage" && create FAT32 "bin/storage" "bin/components/FAT32" ^
 		"bin/components/kernel" "KERNEL" ^
@@ -16,5 +17,6 @@
 		"components/programs/NES/NES.exe" "NES     EXE" ^
 		"bin/components/print" "PRINT   COM" ^
 		"bin/components/reset" "RESET   COM" ^
+		"bin/components/video" "VIDEO   COM" ^
 	&& "qemu\qemu.exe" -m 256 -no-reboot -hda "bin\storage" ^
 	|| pause

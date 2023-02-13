@@ -8,7 +8,6 @@ Number32 program_stack = 128 * 1024 * 1024;
 
 void execute(void(*start)(API* api), API* api)
 {
-	
 	asm("mov %esp, kernel_stack");
 	asm("mov %ebp, kernel_base");
 	//asm("mov %esp, program_stack");
@@ -22,6 +21,12 @@ void execute(void(*start)(API* api), API* api)
 
 void exit(Number code)
 {
+	//reset PIC (interrupt)
+	asm("mov $0x20, %al");
+	asm("out %al, $0xA0");
+	asm("out %al, $0x20");
+	
+	//restore stack
 	asm("mov kernel_stack, %esp");
 	asm("mov kernel_base, %ebp");
 	

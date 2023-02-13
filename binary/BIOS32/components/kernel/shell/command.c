@@ -1,6 +1,35 @@
+#define MAX_NUMBER_OF_STORED_COMMANDS 5
+
+
+Byte   stored_commands[MAX_NUMBER_OF_STORED_COMMANDS * 64];
+Number number_of_stored_commands = 0;
+Number current_stored_command = 0;
+
+
 Boolean execute_command(Byte* command)
 {
 	Number   i;
+	Number   j;
+	
+	if(number_of_stored_commands < MAX_NUMBER_OF_STORED_COMMANDS) {
+		++number_of_stored_commands;
+	}
+	
+	if(number_of_stored_commands == MAX_NUMBER_OF_STORED_COMMANDS) {
+		for(i = 0; i < number_of_stored_commands - 1; ++i) {
+			for(j = 0; j < 64; ++j) {
+				stored_commands[i * 64 + j] = stored_commands[(i + 1) * 64 + j];
+			}
+		}
+	}
+	
+	for(j = 0; j < 64; ++j) {
+		stored_commands[(number_of_stored_commands - 1) * 64 + j] = command[j];
+	}
+	
+	current_stored_command = number_of_stored_commands;
+
+	
 	Byte     program_name[13];
 	Number   extension_index;
 	FAT_Data file;

@@ -15,6 +15,11 @@
 		"bin/components/kernel" "KERNEL" ^
 		"bin/components/test.exe" "TEST    EXE" ^
 		"components/programs/NES/NES.exe" "NES     EXE" ^
+		"components/programs/NES/mario.nes" "MARIO      " ^
+		"components/programs/NES/tmht.nes" "TMHT       " ^
+		"components/programs/NES/chip.nes" "CHIP       " ^
+		"components/programs/NES/pp.nes" "PP         " ^
+		"components/programs/NES/Battletoads.nes" "BT         " ^
 		"bin/components/print" "PRINT   COM" ^
 		"bin/components/reset" "RESET   COM" ^
 		"bin/components/video" "VIDEO   COM" ^

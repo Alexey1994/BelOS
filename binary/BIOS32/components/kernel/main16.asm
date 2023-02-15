@@ -34,6 +34,8 @@ lgdt [GDT_pointer]
 call switch_to_32_bit
 use32
 
+call set_text_mode
+
 push set_text_mode
 push set_VESA_mode
 push get_VESA_mode_info
@@ -453,6 +455,12 @@ set_text_mode:
 	
 	mov AH, 0
 	mov AL, 3 | 0b10000000
+	int 10h
+	
+	;set 8x8 font
+	mov AH, 0x11
+	mov AL, 0x12
+	xor BX, BX
 	int 10h
 	
 	call switch_to_32_bit

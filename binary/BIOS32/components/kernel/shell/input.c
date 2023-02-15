@@ -1,3 +1,7 @@
+Byte   command[256];
+Number command_size = 0;
+
+
 void on_key_input(Byte char_code);
 void on_key_down(Byte key_code, Boolean is_special);
 
@@ -68,10 +72,10 @@ void on_key_input(Byte char_code)
 			on_key_down_handler = &on_break_key_down;
 			on_key_up_handler = &on_break_key_up;
 			//loader_api->clean_interrupt_handler(33);
-			console_text_color = 7;
+			screen_text_color = 7;
 			execute_command(command);
-			console_text_color = 15;
-			console_background_color = 0;
+			screen_text_color = 15;
+			screen_background_color = 0;
 			//loader_api->set_interrupt_handler((Number)&interrupt_33_handler - 12, 33);
 			on_key_up_handler = 0;
 			on_key_input_handler = &on_key_input;
@@ -82,9 +86,9 @@ void on_key_input(Byte char_code)
 			print("\n");
 		}
 		
-		console_text_color = 10;
+		screen_text_color = 10;
 		print(">");
-		console_text_color = 15;
+		screen_text_color = 15;
 	}
 	else if(char_code == '\t') {
 		
@@ -198,7 +202,7 @@ void on_key_down(Byte key_code, Boolean is_special)
 				
 				//clear line
 				for(i = 1; i < 79; ++i) {
-					write_character_in_console(0, ' ');
+					write_character_in_screen(0, ' ');
 				}
 				
 				cursor_pos_x = 1;
@@ -229,7 +233,7 @@ void on_key_down(Byte key_code, Boolean is_special)
 				
 				//clear line
 				for(i = 1; i < 79; ++i) {
-					write_character_in_console(0, ' ');
+					write_character_in_screen(0, ' ');
 				}
 				
 				cursor_pos_x = 1;

@@ -15,12 +15,16 @@ typedef struct {
 Loader_Api;
 
 
-void start_shell(Loader_Api* api);
+Loader_Api* loader_api;
+
+
+void start_shell();
 
 
 void _start(Loader_Api api)
 {
-	start_shell(&api);
+	loader_api = &api;
+	start_shell();
 }
 
 
@@ -28,6 +32,7 @@ void _start(Loader_Api api)
 #include "devices/timer.c"
 #include "devices/VESA.c"
 #include "devices/keyboard.c"
-#include "devices/console.c"
+#include "devices/screen.c"
 
+#include "program/init.c"
 #include "shell/init.c"

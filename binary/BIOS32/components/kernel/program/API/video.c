@@ -1,3 +1,6 @@
+Boolean is_text_mode = 1;
+
+
 Number get_number_of_video_modes()
 {
 	VESA_Info* vesa_info;
@@ -55,6 +58,7 @@ Boolean set_video_mode(Number video_mode_index)
 	}
 	
 	loader_api->set_VESA_mode(video_mode | 0x4000);
+	is_text_mode = 0;
 	
 	return 1;
 }
@@ -126,4 +130,15 @@ void* get_video_mode_framebuffer(Number video_mode_index)
 {
 	update_video_mode_info(video_mode_index);
 	return video_mode_info.framebuffer;
+}
+
+
+void set_text_mode()
+{
+	if(is_text_mode) {
+		return;
+	}
+	
+	loader_api->set_text_mode();
+	is_text_mode = 1;
 }

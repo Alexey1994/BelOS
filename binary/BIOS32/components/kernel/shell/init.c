@@ -1,48 +1,19 @@
-Loader_Api* loader_api;
-
-Byte command[256];
-Number command_size = 0;
-
-
-void (*on_key_down_in_program_handler)(Byte key_code, Boolean is_special) = 0;
-void (*on_key_up_in_program_handler)(Byte key_code, Boolean is_special) = 0;
-
-
-void set_key_down_handler(void(*key_down_handler)(Byte key_code, Boolean is_special))
-{
-	on_key_down_in_program_handler = key_down_handler;
-}
-
-
-void set_key_up_handler(void(*key_up_handler)(Byte key_code, Boolean is_special))
-{
-	on_key_up_in_program_handler = key_up_handler;
-}
-
-
-#include "file.c"
-#include "video.c"
-#include "program/init.c"
-#include "program/COM.c"
-#include "program/EXE.c"
 #include "command.c"
 #include "input.c"
 
 
-void start_shell(Loader_Api* api)
+void start_shell()
 {
-	loader_api = api;
-	
 	open_root();
+	
+	set_timer_frequency_divider(0, 1193);
+	loader_api->set_interrupt_handler((Number)&interrupt_32_handler - 12, 32);
 	
 	on_key_down_handler = &on_key_down;
 	on_key_input_handler = &on_key_input;
+	loader_api->set_interrupt_handler((Number)&interrupt_33_handler - 12, 33);
 	
-	set_timer_frequency_divider(0, 1193);
-	api->set_interrupt_handler((Number)&interrupt_32_handler - 12, 32);
-	api->set_interrupt_handler((Number)&interrupt_33_handler - 12, 33);
-	
-	console_text_color = 10;
+	screen_text_color = 10;
 	print(">");
-	console_text_color = 15;
+	screen_text_color = 15;
 }

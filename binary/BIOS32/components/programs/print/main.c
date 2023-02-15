@@ -8,26 +8,26 @@ Signed_Number compare_null_terminated_bytes(Byte* bytes1, Byte* bytes2);
 
 void main(API* api)
 {
-	if(api->number_of_arguments < 2) {
+	if(api->process.number_of_arguments < 2) {
 		goto error;
 	}
 	
-	if(!compare_null_terminated_bytes(api->arguments[1], "string")) {
-		if(api->number_of_arguments < 3) {
+	if(!compare_null_terminated_bytes(api->process.arguments[1], "string")) {
+		if(api->process.number_of_arguments < 3) {
 			goto error;
 		}
 		
-		api->print(api->arguments[2]);
+		api->console.print(api->process.arguments[2]);
 	}
-	else if(!compare_null_terminated_bytes(api->arguments[1], "dir")) {
+	else if(!compare_null_terminated_bytes(api->process.arguments[1], "dir")) {
 		print_directory(api);
 	}
-	else if(!compare_null_terminated_bytes(api->arguments[1], "file")) {
-		if(api->number_of_arguments < 3) {
+	else if(!compare_null_terminated_bytes(api->process.arguments[1], "file")) {
+		if(api->process.number_of_arguments < 3) {
 			goto error;
 		}
 	
-		print_file(api, api->arguments[2]);
+		print_file(api, api->process.arguments[2]);
 	} 
 	else {
 		goto error;
@@ -36,7 +36,7 @@ void main(API* api)
 	return;
 	
 	error: {
-		api->print(
+		api->console.print(
 			"usage:"
 			"\n\tprint string <string>"
 			"\n\tprint dir"
@@ -57,12 +57,12 @@ void print_directory(API* api)
 	enumerator.cluster_offset = 0;
 	enumerator.file_number    = 0;
 	
-	while(api->enum_files(&enumerator)) {
+	while(api->file.enumerate(&enumerator)) {
 		if(is_many_files) {
-			api->print("\n");
+			api->console.print("\n");
 		}
 		
-		api->print("%s", enumerator.file_data->name);
+		api->console.print("%s", enumerator.file_data->name);
 		is_many_files = 1;
 	}
 }
@@ -72,8 +72,8 @@ void print_file(API* api, Byte* file_name)
 {
 	FAT_Data file;
 	
-	if(!api->open_file(&file, file_name)) {
-		api->print("file %s not found", file_name);
+	if(!api->file.open(&file, file_name)) {
+		api->console.print("file %s not found", file_name);
 		return;
 	}
 	
@@ -84,15 +84,15 @@ void print_file(API* api, Byte* file_name)
 	Number i;
 
 	/*
-	while(api->read_file_sector(&file, sector)) {
+	while(api->file.read_sector(&file, sector)) {
 		for(i = 0; i < 512; ++i) {
-			api->print("%c", sector[i]);
+			api->console.print("%c", sector[i]);
 		}
 	}*/
 	
 	last_sector = sector1;
 	
-	if(api->read_file_sector(&file, last_sector)) {
+	if(api->file.read_sector(&file, last_sector)) {
 		for(;;) {
 			previouse_sector = last_sector;
 			
@@ -103,17 +103,17 @@ void print_file(API* api, Byte* file_name)
 				last_sector = sector1;
 			}
 			
-			if(!api->read_file_sector(&file, last_sector)) {
+			if(!api->file.read_sector(&file, last_sector)) {
 				break;
 			}
 			
 			for(i = 0; i < 512; ++i) {
-				api->print("%c", previouse_sector[i]);
+				api->console.print("%c", previouse_sector[i]);
 			}
 		}
 	
 		for(i = 0; i < file.file_size % 512; ++i) {
-			api->print("%c", previouse_sector[i]);
+			api->console.print("%c", previouse_sector[i]);
 		}
 	}
 }

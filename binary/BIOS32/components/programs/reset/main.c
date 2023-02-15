@@ -4,5 +4,5 @@
 void main(API* api)
 {
 	api->reset();
-	api->print("computer should be restart");
+	api->console.print("computer should be restart");
 }

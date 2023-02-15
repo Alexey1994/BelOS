@@ -1,0 +1,23 @@
+# Disk DescriptorFile
+version=1
+CID=c3e6bc06
+parentCID=ffffffff
+createType="monolithicFlat"
+
+# Extent description
+RW 4096 FLAT "storage" 0
+
+# The disk Data Base 
+#DDB
+
+ddb.adapterType="ide"
+ddb.geometry.cylinders="8"
+ddb.geometry.heads="16"
+ddb.geometry.sectors="63"
+ddb.uuid.image="d5f1d60c-9b38-488a-bd1b-9f137afa3b87"
+ddb.uuid.modification="6547ef95-0301-47eb-bff8-d7e209301117"
+ddb.uuid.parent="00000000-0000-0000-0000-000000000000"
+ddb.uuid.parentmodification="00000000-0000-0000-0000-000000000000"
+ddb.geometry.biosCylinders="8"
+ddb.geometry.biosHeads="16"
+ddb.geometry.biosSectors="63"

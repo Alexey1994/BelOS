@@ -346,14 +346,25 @@ void(*on_key_input_handler)(Byte char_code) = 0;
 Boolean pressed_shift_key = 0;
 
 
-asm (
-	"pusha \n"
-	"call interrupt_33_handler\n"
-	"mov $0x20, %al \n"
-	"out %al, $0x20 \n"
-	"popa \n"
-	"iret"
-);
+Byte last_keyboard_character = 0;
+
+Byte read_character_from_keyboard()
+{
+	Byte result_character;
+	
+	result_character = last_keyboard_character;
+	last_keyboard_character = 0;
+	
+	return result_character;
+}
+
+
+asm("pusha");
+asm("call interrupt_33_handler");
+asm("mov $0x20, %al");
+asm("out %al, $0x20");
+asm("popa");
+asm("iret");
 void interrupt_33_handler()
 {
 	Byte key_state;
@@ -405,6 +416,10 @@ void interrupt_33_handler()
 					char_code = key_to_char_code[key_code];
 				}
 			}
+		}
+		
+		if(char_code) {
+			last_keyboard_character = char_code;
 		}
 		
 		if(on_key_input_handler && char_code) {

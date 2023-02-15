@@ -26,14 +26,12 @@ void set_timer_frequency_divider(Number timer_number, Number divider)
 }
 
 
-asm (
-	"pusha \n"
-	"call interrupt_32_handler\n"
-	"mov $0x20, %al \n"
-	"out %al, $0x20 \n"
-	"popa \n"
-	"iret"
-);
+asm("pusha");
+asm("call interrupt_32_handler");
+asm("mov $0x20, %al");
+asm("out %al, $0x20");
+asm("popa");
+asm("iret");
 void interrupt_32_handler()
 {
 	++number_of_ticks;

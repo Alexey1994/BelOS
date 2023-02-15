@@ -50,7 +50,7 @@ Boolean execute_command(Byte* command)
 	
 	API api;
 
-	initialize_program_api(&api);
+	initialize_program_api(&api, command);
 	
 	
 	if(extension_index) {
@@ -124,8 +124,8 @@ Boolean execute_command(Byte* command)
 	
 	not_found_error: {
 		print(
-			"%s not found."
-			"\nEnter \"print dir\" for show all commands",
+			"%s not found.\n"
+			"Enter \"print dir\" for show all commands",
 			program_name
 		);
 		

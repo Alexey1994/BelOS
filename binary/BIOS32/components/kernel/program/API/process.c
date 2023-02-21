@@ -10,10 +10,15 @@ void execute(void(*start)(API* api), API* api)
 	
 	asm("mov %esp, kernel_stack");
 	asm("mov %ebp, kernel_base");
-	//asm("mov %esp, program_stack");
+	asm("mov program_stack, %esp");
 
 	start(api);
-	asm("return_address:");
+	
+	asm("exit_address:");
+	
+	//restore stack
+	asm("mov kernel_stack, %esp");
+	asm("mov kernel_base, %ebp");
 
 	set_text_mode();
 }
@@ -21,14 +26,10 @@ void execute(void(*start)(API* api), API* api)
 
 void exit(Number code)
 {
-	//reset PIC (interrupt)
+	//reset PIC, for exit from interrupt
 	asm("mov $0x20, %al");
 	asm("out %al, $0xA0");
 	asm("out %al, $0x20");
 	
-	//restore stack
-	asm("mov kernel_stack, %esp");
-	asm("mov kernel_base, %ebp");
-	
-	asm("jmp return_address");
+	asm("jmp exit_address");
 }

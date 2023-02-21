@@ -4,13 +4,16 @@
 %endmacro
 
 
+%define KERNEL_STACK 0x8000
+
+
 org 0x8000
 
 
 mov AX, CS
 mov DS, AX
 mov SS, AX
-mov SP, 0x8000 ;0x10000 - 4
+mov SP, KERNEL_STACK
 
 
 ;clear_screen
@@ -31,6 +34,8 @@ out 0x92, AL
 
 
 lgdt [GDT_pointer]
+
+mov dword [ESP_for_32_bits], KERNEL_STACK
 call switch_to_32_bit
 use32
 
@@ -233,10 +238,17 @@ clean_interrupt_handler:
 	ret
 
 
+saved_EIP: dd 0
+ESP_for_32_bits: dd 0
+
 use32
 switch_to_16_bit:
 	cli
 
+	pop dword [saved_EIP]
+	mov [ESP_for_32_bits], ESP
+	xor ESP, ESP
+	
 	lidt [idtr_16]
 
 	mov AX, 32
@@ -266,17 +278,17 @@ switch_to_16_bit:
 	mov FS, AX
 	mov GS, AX
 	
+	mov SP, 0x1000
+	push word [saved_EIP]
+	
 	mov BX, 0x0870
 	call reset_pic
 
 	sti
-	
-	pop EAX
-	push AX
-	
 	ret
 
 
+;in ESP_for_32_bits
 use16
 switch_to_32_bit:
 	cli
@@ -301,12 +313,12 @@ switch_to_32_bit:
 	mov FS, EAX
 	mov GS, EAX
 	
-	sti
-
 	xor EAX, EAX
 	pop AX
+	mov ESP, [ESP_for_32_bits]
 	push EAX
-
+	
+	sti
 	ret
 
 
@@ -341,8 +353,6 @@ read_sector:
 	int 13h
 	
 	jnc no_read_error
-	;mov AL, 'E'
-	;call print_char
 	mov dword [read_sector_success], 0
 	no_read_error:
 	

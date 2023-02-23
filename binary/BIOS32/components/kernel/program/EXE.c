@@ -121,11 +121,11 @@ typedef union {
 PE_Import_Lookup_Table;
 
 
-Boolean execute_EXE_program(FAT_Data* file, API* api)
+Process_Start load_EXE_program(FAT_Data* file, API* api)
 {
-	Byte*    program;
+	Byte* program;
 
-	program = 1024 * 1024;
+	program = allocate_memory(512);
 	
 	if(!read_FAT_file_sector(&fs, file, program)) {
 		return 0;
@@ -213,7 +213,5 @@ Boolean execute_EXE_program(FAT_Data* file, API* api)
 
 	//TODO: handle import directory
 	
-	execute(pe_optional_header->image_base + pe_optional_header->entry_point, api);
-	
-	return 1;
+	return pe_optional_header->image_base + pe_optional_header->entry_point;
 }

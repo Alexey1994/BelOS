@@ -1,14 +1,14 @@
-Boolean execute_COM_program(FAT_Data* file, API* api)
+Process_Start load_COM_program(FAT_Data* file, API* api)
 {
-	Byte*    program;
+	Process_Start start;
+	Byte*         program;
 
-	program = 1024 * 1024;
+	start = allocate_memory(256 * 1024);
+	program = start;
 	
 	while(read_FAT_file_sector(&fs, file, program)) {
 		program += 512;
 	}
 
-	execute(1024 * 1024, api);
-	
-	return 1;
+	return start;
 }

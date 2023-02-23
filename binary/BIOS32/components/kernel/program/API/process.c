@@ -1,9 +1,12 @@
+typedef void(*Process_Start)(API* api);
+
+
 Number32 kernel_stack;
 Number32 kernel_base;
 Number32 program_stack = 128 * 1024 * 1024;
 
 
-void execute(void(*start)(API* api), API* api)
+void execute(Process_Start start, API* api)
 {
 	//reset keyboard
 	read_character_from_keyboard();

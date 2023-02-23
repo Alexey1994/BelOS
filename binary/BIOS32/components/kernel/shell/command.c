@@ -6,10 +6,10 @@ Number number_of_stored_commands = 0;
 Number current_stored_command = 0;
 
 
-Boolean execute_command(Byte* command)
+void store_command(Byte* command)
 {
-	Number   i;
-	Number   j;
+	Number i;
+	Number j;
 	
 	if(number_of_stored_commands < MAX_NUMBER_OF_STORED_COMMANDS) {
 		++number_of_stored_commands;
@@ -28,30 +28,89 @@ Boolean execute_command(Byte* command)
 	}
 	
 	current_stored_command = number_of_stored_commands;
+}
 
+
+Number parse_program_name(Byte* command, Byte program_name[13])
+{
+	Number i;
 	
-	Byte     program_name[13];
-	Number   extension_index;
-	FAT_Data file;
-	
-	for(i = 0; i < sizeof(program_name) - 1 && command[i] && command[i] != ' '; ++i) {
+	for(
+		i = 0;
+		i < 12 &&
+			command[i] &&
+			command[i] != ' ' &&
+			command[i] != '|';
+		++i
+	) {
 		program_name[i] = command[i];
-	}
-	
-	for(extension_index = i; extension_index; --extension_index) {
-		if(program_name[extension_index] == '.') {
-			++extension_index;
-			break;
-		}
 	}
 	
 	program_name[i] = '\0';
 	
-	
-	API api;
+	return i;
+}
 
-	initialize_program_api(&api, command);
+
+Number get_program_name_extension_index(Byte program_name[13], Number program_name_size)
+{
+	Number extension_index;
 	
+	for(extension_index = program_name_size; extension_index; --extension_index) {
+		if(program_name[extension_index - 1] == '.') {
+			break;
+		}
+	}
+	
+	return extension_index;
+}
+
+
+Number parse_arguments(Byte* command, Byte** arguments, Number* number_of_arguments)
+{
+	Number arguments_size;
+	
+	arguments_size = 0;
+	*number_of_arguments = 0;
+	
+	while(command[arguments_size] && *number_of_arguments < MAX_NUMBER_OF_ARGUMENTS && command[arguments_size] != '|') {
+		arguments[*number_of_arguments] = command + arguments_size;
+		++*number_of_arguments;
+		
+		while(command[arguments_size] && command[arguments_size] != ' ' && command[arguments_size] != '|') {
+			++arguments_size;
+		}
+		
+		if(command[arguments_size] == ' ') {
+			command[arguments_size] = '\0';
+			++arguments_size;
+		}
+		else if(command[arguments_size] == '|') {
+			Number i;
+			for(i = 255; i > arguments_size; --i) {
+				command[i] = command[i - 1];
+			}
+			
+			command[arguments_size] = '\0';
+			++arguments_size;
+		}
+		
+		while(command[arguments_size] && command[arguments_size] == ' ') {
+			++arguments_size;
+		}
+	}
+	
+	return arguments_size;
+}
+
+
+Boolean execute_program(Byte program_name[13], Number program_name_size, API* api)
+{
+	FAT_Data      file;
+	Process_Start start;
+	Number        extension_index;
+
+	extension_index = get_program_name_extension_index(program_name, program_name_size);
 	
 	if(extension_index) {
 		if(
@@ -63,11 +122,16 @@ Boolean execute_command(Byte* command)
 				goto not_found_error;
 			}
 			
-			if(!execute_COM_program(&file, &api)) {
+			start = load_COM_program(&file, api);
+			
+			if(!start) {
 				goto execution_error;
 			}
 			
-			return;
+			execute(start, api);
+			free_memory(start);
+			
+			return 1;
 		}
 		else if(
 			to_upper_case(program_name[extension_index]) == 'E' &&
@@ -78,33 +142,42 @@ Boolean execute_command(Byte* command)
 				goto not_found_error;
 			}
 			
-			if(!execute_EXE_program(&file, &api)) {
+			start = load_EXE_program(&file, api);
+			
+			if(!start) {
 				goto execution_error;
 			}
 			
-			return;
+			execute(start, api);
+			
+			return 1;
 		}
 		
 		goto not_found_error;
 	}
 	
-	if(i >= 8) {
+	if(program_name_size >= 8) {
 		goto not_found_error;
 	}
 	
-	program_name[i++] = '.';
-	extension_index = i;
-	program_name[i++] = 'c';
-	program_name[i++] = 'o';
-	program_name[i++] = 'm';
-	program_name[i] = '\0';
+	program_name[program_name_size++] = '.';
+	extension_index = program_name_size;
+	program_name[program_name_size++] = 'c';
+	program_name[program_name_size++] = 'o';
+	program_name[program_name_size++] = 'm';
+	program_name[program_name_size] = '\0';
 	
 	if(open_FAT_file(&fs,  &file, program_name)) {
-		if(!execute_COM_program(&file, &api)) {
+		start = load_COM_program(&file, api);
+			
+		if(!start) {
 			goto execution_error;
 		}
+			
+		execute(start, api);
+		free_memory(start);
 		
-		return;
+		return 1;
 	}
 	
 	program_name[extension_index]     = 'e';
@@ -112,11 +185,15 @@ Boolean execute_command(Byte* command)
 	program_name[extension_index + 2] = 'e';
 	
 	if(open_FAT_file(&fs,  &file, program_name)) {
-		if(!execute_EXE_program(&file, &api)) {
+		start = load_EXE_program(&file, api);
+			
+		if(!start) {
 			goto execution_error;
 		}
+			
+		execute(start, api);
 		
-		return;
+		return 1;
 	}
 	
 	program_name[extension_index - 1] = '\0';
@@ -125,11 +202,11 @@ Boolean execute_command(Byte* command)
 	not_found_error: {
 		print(
 			"%s not found.\n"
-			"Enter \"print dir\" for show all commands",
+			"Enter \"load dir\" for show all commands",
 			program_name
 		);
 		
-		return;
+		return 0;
 	}
 	
 	execution_error: {
@@ -138,6 +215,42 @@ Boolean execute_command(Byte* command)
 			program_name
 		);
 		
-		return;
+		return 0;
 	}
+}
+
+
+Boolean execute_command(Byte* command)
+{
+	Byte   program_name[13];
+	Number program_name_size;
+	Number arguments_size;
+	API*   api;
+	
+	store_command(command);
+	reset_heap();
+	
+	for(;;) {
+		api = allocate_memory(sizeof(API));
+		initialize_program_api(api);
+
+		program_name_size = parse_program_name(command, program_name);
+		arguments_size = parse_arguments(command, &api->process.arguments, &api->process.number_of_arguments);
+		
+		if(!execute_program(program_name, program_name_size, api)) {
+			return 0;
+		}
+		
+		if(command[arguments_size] != '|') {
+			break;
+		}
+		
+		command += arguments_size + 1;
+		
+		while(*command == ' ') {
+			++command;
+		}
+	}
+	
+	return 1;
 }

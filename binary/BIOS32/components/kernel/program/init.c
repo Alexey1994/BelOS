@@ -1,4 +1,5 @@
 #include <API.c>
+#include "API/heap.c"
 #include "API/video.c"
 #include "API/file.c"
 #include "API/keyboard.c"
@@ -6,31 +7,7 @@
 #include "API/console.c"
 
 
-void parse_program_arguments(API* api, Byte* command)
-{
-	api->process.number_of_arguments = 0;	
-
-	while(*command && api->process.number_of_arguments < sizeof(api->process.arguments) / sizeof(api->process.arguments[0])) {
-		api->process.arguments[api->process.number_of_arguments] = command;
-		++api->process.number_of_arguments;
-		
-		while(*command && *command != ' ') {
-			++command;
-		}
-		
-		if(*command == ' ') {
-			*command = '\0';
-			++command;
-		}
-		
-		while(*command && *command == ' ') {
-			++command;
-		}
-	}
-}
-
-
-void initialize_program_api(API* api, Byte* command)
+void initialize_program_api(API* api)
 {
 	api->process.sleep = &sleep;
 	api->process.exit  = &exit;
@@ -56,8 +33,6 @@ void initialize_program_api(API* api, Byte* command)
 	api->screen.set_text_mode                 = &set_text_mode;
 	
 	api->reset = loader_api->reset;
-	
-	parse_program_arguments(api, command);
 }
 
 

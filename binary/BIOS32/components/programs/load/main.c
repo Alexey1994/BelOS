@@ -8,21 +8,23 @@ Signed_Number compare_null_terminated_bytes(Byte* bytes1, Byte* bytes2);
 
 void main(API* api)
 {
+	get_module_address(main);
+	
 	if(api->process.number_of_arguments < 2) {
 		goto error;
 	}
 	
-	if(!compare_null_terminated_bytes(api->process.arguments[1], "string")) {
+	if(!compare_null_terminated_bytes(api->process.arguments[1], "string" + module_address)) {
 		if(api->process.number_of_arguments < 3) {
 			goto error;
 		}
 		
 		api->console.print(api->process.arguments[2]);
 	}
-	else if(!compare_null_terminated_bytes(api->process.arguments[1], "dir")) {
+	else if(!compare_null_terminated_bytes(api->process.arguments[1], "dir" + module_address)) {
 		print_directory(api);
 	}
-	else if(!compare_null_terminated_bytes(api->process.arguments[1], "file")) {
+	else if(!compare_null_terminated_bytes(api->process.arguments[1], "file" + module_address)) {
 		if(api->process.number_of_arguments < 3) {
 			goto error;
 		}
@@ -38,9 +40,10 @@ void main(API* api)
 	error: {
 		api->console.print(
 			"usage:"
-			"\n\tprint string <string>"
-			"\n\tprint dir"
-			"\n\tprint file <file_name>"
+			"\n\tload string <string>"
+			"\n\tload dir"
+			"\n\tload file <file_name>"
+			+ module_address
 		);
 	}
 }
@@ -48,6 +51,8 @@ void main(API* api)
 
 void print_directory(API* api)
 {
+	get_module_address(print_directory);
+	
 	File_Enumerator enumerator;
 	Boolean         is_many_files;
 
@@ -59,10 +64,10 @@ void print_directory(API* api)
 	
 	while(api->file.enumerate(&enumerator)) {
 		if(is_many_files) {
-			api->console.print("\n");
+			api->console.print("\n" + module_address);
 		}
 		
-		api->console.print("%s", enumerator.file_data->name);
+		api->console.print("%s" + module_address, enumerator.file_data->name);
 		is_many_files = 1;
 	}
 }
@@ -70,10 +75,12 @@ void print_directory(API* api)
 
 void print_file(API* api, Byte* file_name)
 {
+	get_module_address(print_file);
+	
 	FAT_Data file;
 	
 	if(!api->file.open(&file, file_name)) {
-		api->console.print("file %s not found", file_name);
+		api->console.print("file %s not found" + module_address, file_name);
 		return;
 	}
 	
@@ -108,12 +115,12 @@ void print_file(API* api, Byte* file_name)
 			}
 			
 			for(i = 0; i < 512; ++i) {
-				api->console.print("%c", previouse_sector[i]);
+				api->console.print("%c" + module_address, previouse_sector[i]);
 			}
 		}
 	
 		for(i = 0; i < file.file_size % 512; ++i) {
-			api->console.print("%c", previouse_sector[i]);
+			api->console.print("%c" + module_address, previouse_sector[i]);
 		}
 	}
 }

@@ -7,13 +7,16 @@
 #include "file.c"
 
 
+#define MAX_NUMBER_OF_ARGUMENTS 256
+
+
 typedef struct {
 	struct {
 		void (*sleep) (Number milliseconds);
 		void (*exit)  (Number code);
 		
 		Number number_of_arguments;
-		Byte*  arguments[256];
+		Byte*  arguments[MAX_NUMBER_OF_ARGUMENTS];
 	}
 	process;
 	
@@ -54,6 +57,9 @@ typedef struct {
 	void (*reset) ();
 }
 API;
+
+
+#define get_module_address(function) Number module_address; asm("call . + 5\n" "pop %0" : "=a"(module_address)); module_address -= (Number)&function + 15;
 
 
 #endif//API_INCLUDED

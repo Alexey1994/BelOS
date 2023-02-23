@@ -8,6 +8,7 @@
 	&& ld -T kernel_script.ld -o "bin/components/kernel32.o" "bin/components/kernel32.elf" ^
 	&& objcopy -O binary -S "bin/components/kernel32.o" "bin/components/kernel" ^
 	&& build_COM_program.bat "load" ^
+	&& build_COM_program.bat "store" ^
 	&& build_COM_program.bat "reset" ^
 	&& build_COM_program.bat "video" ^
 	&& build_EXE_program.bat "test" ^
@@ -16,6 +17,7 @@
 		"bin/components/test.exe" "TEST    EXE" ^
 		"components/programs/NES/NES.exe" "NES     EXE" ^
 		"bin/components/load" "LOAD    COM" ^
+		"bin/components/store" "STORE   COM" ^
 		"bin/components/reset" "RESET   COM" ^
 		"bin/components/video" "VIDEO   COM" ^
 	&& "qemu\qemu.exe" -m 256 -no-reboot -hda "bin\storage" ^

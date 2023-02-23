@@ -11,6 +11,11 @@
 
 
 typedef struct {
+	//Number (*read)(Byte* buffer, Number size_of_buffer);
+	//Number (*write)(Byte* buffer, Number size_of_buffer);
+	Number (*read_character)(Byte* source);
+	void (*write_character)(Byte* source, Number character);
+	
 	struct {
 		void (*sleep) (Number milliseconds);
 		void (*exit)  (Number code);

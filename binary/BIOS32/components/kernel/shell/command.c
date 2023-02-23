@@ -104,56 +104,35 @@ Number parse_arguments(Byte* command, Byte** arguments, Number* number_of_argume
 }
 
 
-Boolean execute_program(Byte program_name[13], Number program_name_size, API* api)
+Process_Start load_program(Byte program_name[13], Number program_name_size, API* api)
 {
-	FAT_Data      file;
-	Process_Start start;
-	Number        extension_index;
+	FAT_Data file;
+	Number   extension_index;
 
 	extension_index = get_program_name_extension_index(program_name, program_name_size);
 	
 	if(extension_index) {
+		if(!open_FAT_file(&fs,  &file, program_name)) {
+			goto not_found_error;
+		}
+		
 		if(
 			to_upper_case(program_name[extension_index]) == 'C' &&
 			to_upper_case(program_name[extension_index + 1]) == 'O' &&
 			to_upper_case(program_name[extension_index + 2]) == 'M'
 		) {
-			if(!open_FAT_file(&fs,  &file, program_name)) {
-				goto not_found_error;
-			}
-			
-			start = load_COM_program(&file, api);
-			
-			if(!start) {
-				goto execution_error;
-			}
-			
-			execute(start, api);
-			free_memory(start);
-			
-			return 1;
+			return load_COM_program(&file, api);
 		}
 		else if(
 			to_upper_case(program_name[extension_index]) == 'E' &&
 			to_upper_case(program_name[extension_index + 1]) == 'X' &&
 			to_upper_case(program_name[extension_index + 2]) == 'E'
 		) {
-			if(!open_FAT_file(&fs,  &file, program_name)) {
-				goto not_found_error;
-			}
-			
-			start = load_EXE_program(&file, api);
-			
-			if(!start) {
-				goto execution_error;
-			}
-			
-			execute(start, api);
-			
-			return 1;
+			return load_EXE_program(&file, api);
 		}
-		
-		goto not_found_error;
+		else {
+			goto not_found_error;
+		}
 	}
 	
 	if(program_name_size >= 8) {
@@ -168,16 +147,7 @@ Boolean execute_program(Byte program_name[13], Number program_name_size, API* ap
 	program_name[program_name_size] = '\0';
 	
 	if(open_FAT_file(&fs,  &file, program_name)) {
-		start = load_COM_program(&file, api);
-			
-		if(!start) {
-			goto execution_error;
-		}
-			
-		execute(start, api);
-		free_memory(start);
-		
-		return 1;
+		return load_COM_program(&file, api);
 	}
 	
 	program_name[extension_index]     = 'e';
@@ -185,15 +155,7 @@ Boolean execute_program(Byte program_name[13], Number program_name_size, API* ap
 	program_name[extension_index + 2] = 'e';
 	
 	if(open_FAT_file(&fs,  &file, program_name)) {
-		start = load_EXE_program(&file, api);
-			
-		if(!start) {
-			goto execution_error;
-		}
-			
-		execute(start, api);
-		
-		return 1;
+		return load_EXE_program(&file, api);
 	}
 	
 	program_name[extension_index - 1] = '\0';
@@ -203,15 +165,6 @@ Boolean execute_program(Byte program_name[13], Number program_name_size, API* ap
 		print(
 			"%s not found.\n"
 			"Enter \"load dir\" for show all commands",
-			program_name
-		);
-		
-		return 0;
-	}
-	
-	execution_error: {
-		print(
-			"%s not executed.",
 			program_name
 		);
 		
@@ -227,19 +180,41 @@ Boolean execute_command(Byte* command)
 	Number arguments_size;
 	API*   api;
 	
-	store_command(command);
 	reset_heap();
+	first_process = 0;
+	
+	store_command(command);
+	
 	
 	for(;;) {
+		Process** previouse_process;
+		
+		previouse_process = &first_process;
+		while(*previouse_process) {
+			previouse_process = &((*previouse_process)->next);
+		}
+		*previouse_process = allocate_memory(sizeof(Process));
+		(*previouse_process)->next = 0;
+		
+		
 		api = allocate_memory(sizeof(API));
 		initialize_program_api(api);
 
 		program_name_size = parse_program_name(command, program_name);
 		arguments_size = parse_arguments(command, &api->process.arguments, &api->process.number_of_arguments);
 		
-		if(!execute_program(program_name, program_name_size, api)) {
-			return 0;
+		
+		(*previouse_process)->api = api;
+		(*previouse_process)->started = 0;
+		(*previouse_process)->start = load_program(program_name, program_name_size, api);
+		
+		if(!(*previouse_process)->start) {
+			goto execution_error;
 		}
+		
+		(*previouse_process)->esp = (Byte*)(*previouse_process)->start + 256 * 1024;
+		(*previouse_process)->ebp = (*previouse_process)->esp;
+		
 		
 		if(command[arguments_size] != '|') {
 			break;
@@ -252,5 +227,19 @@ Boolean execute_command(Byte* command)
 		}
 	}
 	
+	current_process = first_process;
+	
+	current_process->started = 1;
+	execute(current_process->start, current_process->api);
+	
 	return 1;
+	
+	execution_error: {
+		print(
+			"%s not executed.",
+			program_name
+		);
+		
+		return 0;
+	}
 }

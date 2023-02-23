@@ -1,6 +1,11 @@
 #include <API.c>
 
 
+API* _api;
+
+
+void print(Byte* parameters, ...);
+
 void print_directory(API* api);
 void print_file(API* api, Byte* file_name);
 Signed_Number compare_null_terminated_bytes(Byte* bytes1, Byte* bytes2);
@@ -9,6 +14,8 @@ Signed_Number compare_null_terminated_bytes(Byte* bytes1, Byte* bytes2);
 void main(API* api)
 {
 	get_module_address(main);
+
+	*(API**)((Byte*)&_api + module_address) = api;
 	
 	if(api->process.number_of_arguments < 2) {
 		goto error;
@@ -19,7 +26,7 @@ void main(API* api)
 			goto error;
 		}
 		
-		api->console.print(api->process.arguments[2]);
+		print("%s" + module_address, api->process.arguments[2]);
 	}
 	else if(!compare_null_terminated_bytes(api->process.arguments[1], "dir" + module_address)) {
 		print_directory(api);
@@ -49,6 +56,19 @@ void main(API* api)
 }
 
 
+#include <writer.c>
+
+
+void print(Byte* parameters, ...)
+{
+	get_module_address(print);
+	API* api = *(API**)((Byte*)&_api + module_address);
+	//api->console.print("k" + module_address);
+	
+	print_in_source(0, api->write_character, parameters, &parameters + 1);
+}
+
+
 void print_directory(API* api)
 {
 	get_module_address(print_directory);
@@ -64,10 +84,10 @@ void print_directory(API* api)
 	
 	while(api->file.enumerate(&enumerator)) {
 		if(is_many_files) {
-			api->console.print("\n" + module_address);
+			print("\n" + module_address);
 		}
 		
-		api->console.print("%s" + module_address, enumerator.file_data->name);
+		print("%s" + module_address, enumerator.file_data->name);
 		is_many_files = 1;
 	}
 }
@@ -115,12 +135,12 @@ void print_file(API* api, Byte* file_name)
 			}
 			
 			for(i = 0; i < 512; ++i) {
-				api->console.print("%c" + module_address, previouse_sector[i]);
+				print("%c" + module_address, previouse_sector[i]);
 			}
 		}
 	
 		for(i = 0; i < file.file_size % 512; ++i) {
-			api->console.print("%c" + module_address, previouse_sector[i]);
+			print("%c" + module_address, previouse_sector[i]);
 		}
 	}
 }

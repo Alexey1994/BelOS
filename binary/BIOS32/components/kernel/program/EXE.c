@@ -121,7 +121,7 @@ typedef union {
 PE_Import_Lookup_Table;
 
 
-Process_Start load_EXE_program(FAT_Data* file, API* api)
+Boolean load_EXE_program(Process* process, FAT_Data* file)
 {
 	Byte* program;
 
@@ -209,9 +209,14 @@ Process_Start load_EXE_program(FAT_Data* file, API* api)
 			program += 512;
 		}
 	}
-	
 
 	//TODO: handle import directory
 	
-	return pe_optional_header->image_base + pe_optional_header->entry_point;
+	process->start = pe_optional_header->image_base + pe_optional_header->entry_point;
+	process->esp = program + pe_optional_header->size_of_stack_reserve;
+	process->ebp = process->esp;
+	
+	set_heap_top(process->esp);
+	
+	return 1;
 }

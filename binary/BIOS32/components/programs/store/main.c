@@ -6,10 +6,10 @@ void main(API* api)
 	Number character;
 	
 	for(;;) {
-		//api->write_character(0, api->read_character(0));
+		//api->pipe.write_character(0, api->pipe.read_character(0));
 		
-		character = api->read_character(0);
-		api->write_character(0, character);
-		api->write_character(0, character);
+		character = api->pipe.read_character(0);
+		api->pipe.write_character(0, character);
+		api->pipe.write_character(0, character);
 	}
 }

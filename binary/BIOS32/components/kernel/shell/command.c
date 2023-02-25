@@ -104,7 +104,7 @@ Number parse_arguments(Byte* command, Byte** arguments, Number* number_of_argume
 }
 
 
-Process_Start load_program(Byte program_name[13], Number program_name_size, API* api)
+Boolean load_program(Process* process, Byte program_name[13], Number program_name_size)
 {
 	FAT_Data file;
 	Number   extension_index;
@@ -121,14 +121,22 @@ Process_Start load_program(Byte program_name[13], Number program_name_size, API*
 			to_upper_case(program_name[extension_index + 1]) == 'O' &&
 			to_upper_case(program_name[extension_index + 2]) == 'M'
 		) {
-			return load_COM_program(&file, api);
+			if(!load_COM_program(process, &file)) {
+				goto execution_error;
+			}
+			
+			return 1;
 		}
 		else if(
 			to_upper_case(program_name[extension_index]) == 'E' &&
 			to_upper_case(program_name[extension_index + 1]) == 'X' &&
 			to_upper_case(program_name[extension_index + 2]) == 'E'
 		) {
-			return load_EXE_program(&file, api);
+			if(!load_EXE_program(process, &file)) {
+				goto execution_error;
+			}
+			
+			return 1;
 		}
 		else {
 			goto not_found_error;
@@ -147,7 +155,11 @@ Process_Start load_program(Byte program_name[13], Number program_name_size, API*
 	program_name[program_name_size] = '\0';
 	
 	if(open_FAT_file(&fs,  &file, program_name)) {
-		return load_COM_program(&file, api);
+		if(!load_COM_program(process, &file)) {
+			goto execution_error;
+		}
+		
+		return 1;
 	}
 	
 	program_name[extension_index]     = 'e';
@@ -155,7 +167,11 @@ Process_Start load_program(Byte program_name[13], Number program_name_size, API*
 	program_name[extension_index + 2] = 'e';
 	
 	if(open_FAT_file(&fs,  &file, program_name)) {
-		return load_EXE_program(&file, api);
+		if(!load_EXE_program(process, &file)) {
+			goto execution_error;
+		}
+		
+		return 1;
 	}
 	
 	program_name[extension_index - 1] = '\0';
@@ -170,6 +186,15 @@ Process_Start load_program(Byte program_name[13], Number program_name_size, API*
 		
 		return 0;
 	}
+	
+	execution_error: {
+		print(
+			"%s not executed.",
+			program_name
+		);
+		
+		return 0;
+	}
 }
 
 
@@ -178,42 +203,39 @@ Boolean execute_command(Byte* command)
 	Byte   program_name[13];
 	Number program_name_size;
 	Number arguments_size;
-	API*   api;
 	
 	reset_heap();
 	first_process = 0;
 	
 	store_command(command);
 	
+	Process** next_process_pointer;
+	Process*  new_process;
+	
+	next_process_pointer = &first_process;
 	
 	for(;;) {
-		Process** previouse_process;
-		
-		previouse_process = &first_process;
-		while(*previouse_process) {
-			previouse_process = &((*previouse_process)->next);
-		}
-		*previouse_process = allocate_memory(sizeof(Process));
-		(*previouse_process)->next = 0;
+		new_process = allocate_memory(sizeof(Process));
+		*next_process_pointer = new_process;
+		new_process->next = 0;
+		new_process->started = 0;
+		next_process_pointer = &new_process->next;
 		
 		
-		api = allocate_memory(sizeof(API));
-		initialize_program_api(api);
+		new_process->api = allocate_memory(sizeof(API));
+		initialize_program_api(new_process->api);
 
 		program_name_size = parse_program_name(command, program_name);
-		arguments_size = parse_arguments(command, &api->process.arguments, &api->process.number_of_arguments);
+		arguments_size = parse_arguments(
+			command,
+			&new_process->api->process.arguments,
+			&new_process->api->process.number_of_arguments
+		);
 		
 		
-		(*previouse_process)->api = api;
-		(*previouse_process)->started = 0;
-		(*previouse_process)->start = load_program(program_name, program_name_size, api);
-		
-		if(!(*previouse_process)->start) {
-			goto execution_error;
+		if(!load_program(new_process, program_name, program_name_size)) {
+			return 0;
 		}
-		
-		(*previouse_process)->esp = (Byte*)(*previouse_process)->start + 256 * 1024;
-		(*previouse_process)->ebp = (*previouse_process)->esp;
 		
 		
 		if(command[arguments_size] != '|') {
@@ -227,19 +249,7 @@ Boolean execute_command(Byte* command)
 		}
 	}
 	
-	current_process = first_process;
-	
-	current_process->started = 1;
-	execute(current_process->start, current_process->api);
+	execute_main_process(first_process);
 	
 	return 1;
-	
-	execution_error: {
-		print(
-			"%s not executed.",
-			program_name
-		);
-		
-		return 0;
-	}
 }

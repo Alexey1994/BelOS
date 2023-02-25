@@ -63,9 +63,8 @@ void print(Byte* parameters, ...)
 {
 	get_module_address(print);
 	API* api = *(API**)((Byte*)&_api + module_address);
-	//api->console.print("k" + module_address);
 	
-	print_in_source(0, api->write_character, parameters, &parameters + 1);
+	print_in_source(0, api->pipe.write_character, parameters, &parameters + 1);
 }
 
 
@@ -107,7 +106,7 @@ void print_file(API* api, Byte* file_name)
 	Byte   sector1[512];
 	Byte   sector2[512];
 	Byte*  last_sector;
-	Byte*  previouse_sector;
+	Byte*  previous_sector;
 	Number i;
 
 	/*
@@ -121,7 +120,7 @@ void print_file(API* api, Byte* file_name)
 	
 	if(api->file.read_sector(&file, last_sector)) {
 		for(;;) {
-			previouse_sector = last_sector;
+			previous_sector = last_sector;
 			
 			if(last_sector == sector1) {
 				last_sector = sector2;
@@ -135,12 +134,12 @@ void print_file(API* api, Byte* file_name)
 			}
 			
 			for(i = 0; i < 512; ++i) {
-				print("%c" + module_address, previouse_sector[i]);
+				print("%c" + module_address, previous_sector[i]);
 			}
 		}
 	
 		for(i = 0; i < file.file_size % 512; ++i) {
-			print("%c" + module_address, previouse_sector[i]);
+			print("%c" + module_address, previous_sector[i]);
 		}
 	}
 }

@@ -3,144 +3,20 @@
 #include "API/video.c"
 #include "API/file.c"
 #include "API/keyboard.c"
-#include "API/process.c"
 #include "API/console.c"
-
-
-typedef struct {
-	struct Process* next;
-	
-	API*          api;
-	Process_Start start;
-	Boolean       started;
-	
-	Number  previouse_character;
-	Boolean has_character;
-	
-	Number esp;
-	Number ebp;
-}
-Process;
-
-
-Process* first_process = 0;
-Process* current_process = 0;
-
-/*
-Number read_from_pipe(Byte* buffer, Number size_of_buffer)
-{
-	Number i;
-	
-	if(current_process == first_process) {
-		for(i = 0; i < size_of_buffer; ++i) {
-			buffer[i] = read_character_from_console(0);
-		}
-		
-		return size_of_buffer;
-	}
-	else {
-		//current_process = current_process->previouse;
-	}
-}
-
-
-Number write_in_pipe(Byte* buffer, Number size_of_buffer)
-{
-	Number i;
-	
-	if(!current_process->next) {
-		for(i = 0; i < size_of_buffer; ++i) {
-			write_character_in_screen(0, buffer[i]);
-		}
-		
-		return size_of_buffer;
-	}
-	else {
-		
-		current_process = current_process->next;
-	}
-}*/
-
-
-Number read_character_from_pipe(Byte* source)
-{
-	if(current_process == first_process) {
-		return read_character_from_console(0);
-	}
-	else {
-		if(!current_process->has_character) {
-			//save current process context
-			asm("mov %%esp, %0":"=a"(current_process->esp));
-			asm("mov %%ebp, %0":"=a"(current_process->ebp));
-			
-			//find previouse process
-			Process* previouse_process;
-			previouse_process = first_process;
-			
-			while(previouse_process->next != current_process) {
-				previouse_process = previouse_process->next;
-			}
-			
-			//switch to previouse process
-			current_process = previouse_process;
-			//TODO: current_process = current_process->previouse;
-			
-			asm("mov %0, %%esp"::"a"(current_process->esp));
-			asm("mov %0, %%ebp"::"a"(current_process->ebp));
-			asm("jmp return_address_from_read");
-			
-			asm("return_address_from_write:");
-		}
-		
-		current_process->has_character = 0;
-		
-		return current_process->previouse_character;
-	}
-}
-
-
-void write_character_in_pipe(Byte* source, Number character)
-{
-	if(!current_process->next) {
-		write_character_in_screen(0, character);
-	}
-	else {
-		//save current process context
-		asm("mov %%esp, %0":"=a"(current_process->esp));
-		asm("mov %%ebp, %0":"=a"(current_process->ebp));
-		
-		//switch to next process
-		current_process = current_process->next;
-		current_process->previouse_character = character;
-		current_process->has_character = 1;
-		
-		if(!current_process->started) {
-			current_process->started = 1;
-			
-			asm("mov %0, %%esp"::"a"(current_process->esp));
-			asm("mov %0, %%ebp"::"a"(current_process->ebp));
-			current_process->start(current_process->api);
-		}
-		else {
-			asm("mov %0, %%esp"::"a"(current_process->esp));
-			asm("mov %0, %%ebp"::"a"(current_process->ebp));
-			asm("jmp return_address_from_write");
-		}
-		
-		asm("return_address_from_read:");
-	}
-}
+#include "API/process.c"
+#include "API/pipe.c"
 
 
 void initialize_program_api(API* api)
 {
-	//api->read = &read_from_pipe;
-	//api->write = &write_in_pipe;
-	api->read_character = &read_character_from_pipe;
-	api->write_character = &write_character_in_pipe;
-	
 	api->process.sleep = &sleep;
 	api->process.exit  = &exit;
+	
+	//api->pipe.read = &read_from_pipe;
+	//api->pipe.write = &write_in_pipe;
+	api->pipe.read_character = &read_character_from_pipe;
+	api->pipe.write_character = &write_character_in_pipe;
 	
 	api->file.enumerate   = &enum_files;
 	api->file.open        = &open_file;

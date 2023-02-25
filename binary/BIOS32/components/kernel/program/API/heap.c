@@ -1,9 +1,15 @@
 Byte* heap_top = 1024 * 1024;
 
 
+void set_heap_top(Number new_top)
+{
+	heap_top = new_top;
+}
+
+
 void reset_heap()
 {
-	heap_top = 1024 * 1024;
+	set_heap_top(1024 * 1024);
 }
 
 

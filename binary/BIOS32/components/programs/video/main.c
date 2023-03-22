@@ -1,22 +1,45 @@
 #include <API.c>
 
 
-void main(API* api)
+API* _api;
+
+
+void print(Byte* parameters, ...);
+
+
+void start(API* api)
 {
-	get_module_address(main);
+	get_module_address();
+	*(API**)((Byte*)&_api + module_address) = api;
 	
 	Number number_of_video_modes;
 	Number i;
 	
-	number_of_video_modes = api->screen.get_number_of_video_modes();
-	api->console.print("%d modes:\n" + module_address, number_of_video_modes);
+	number_of_video_modes = api->display.pixel.get_number_of_modes();
+	print("%d modes:\n" + module_address, number_of_video_modes);
 	
 	for(i = 0; i < number_of_video_modes; ++i) {
-		api->console.print(
+		Pixel_Mode mode;
+		
+		api->display.pixel.get_mode_info(i, &mode);
+		
+		print(
 			"%dx%dx%d, " + module_address,
-			api->screen.get_video_mode_width(i),
-			api->screen.get_video_mode_height(i),
-			api->screen.get_video_mode_bits_per_pixel(i)
+			mode.width,
+			mode.height,
+			mode.bits_per_pixel
 		);
 	}
+}
+
+
+#include <writer.c>
+
+
+void print(Byte* parameters, ...)
+{
+	get_module_address();
+	API* api = *(API**)((Byte*)&_api + module_address);
+	
+	print_in_source(0, api->pipe.write_character, parameters, &parameters + 1);
 }

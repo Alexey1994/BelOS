@@ -31,8 +31,35 @@ void _start(Loader_Api api)
 #include "interfaces/IO.c"
 #include "devices/timer.c"
 #include "devices/VESA.c"
+#include "devices/text display.c"
 #include "devices/keyboard.c"
-#include "devices/screen.c"
 
 #include "program/init.c"
-#include "shell/init.c"
+
+
+void start_shell()
+{
+	*((Process**)CURRENT_PROCESS_POINTER_ADDRESS) = &current_process;
+	
+	open_root();
+	
+	set_timer_frequency_divider(0, 1193);
+	loader_api->set_interrupt_handler((Number)&interrupt_32_handler - 12, 32);
+	
+	loader_api->set_interrupt_handler((Number)&interrupt_33_handler - 12, 33);
+	
+
+	Process* shell_process;
+
+	shell_process = create_process("shell", 0);
+	
+	if(shell_process) {
+		parse_arguments(
+			shell_process->api->process.command,
+			&shell_process->api->process.arguments,
+			&shell_process->api->process.number_of_arguments
+		);
+		
+		switch_to_process(shell_process);
+	}
+}

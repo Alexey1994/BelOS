@@ -468,10 +468,10 @@ set_text_mode:
 	int 10h
 	
 	;set 8x8 font
-	mov AH, 0x11
-	mov AL, 0x12
-	xor BX, BX
-	int 10h
+	;mov AH, 0x11
+	;mov AL, 0x12
+	;xor BX, BX
+	;int 10h
 	
 	call switch_to_32_bit
 	use32

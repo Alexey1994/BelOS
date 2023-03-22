@@ -9,7 +9,7 @@ Boolean load_COM_program(Process* process, FAT_Data* file)
 		program += 512;
 	}
 	
-	process->esp = program + 64 * 1024;
+	process->esp = process->start + file->file_size + 64 * 1024;
 	process->ebp = process->esp;
 
 	return 1;

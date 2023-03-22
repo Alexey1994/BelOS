@@ -4,73 +4,43 @@
 API* _api;
 
 
-void print(Byte* parameters, ...);
-
-void print_directory(API* api);
-void print_file(API* api, Byte* file_name);
-Signed_Number compare_null_terminated_bytes(Byte* bytes1, Byte* bytes2);
+Number main(Number number_of_arguments, Byte** arguments);
 
 
-void main(API* api)
+void start(API* api)
 {
-	get_module_address(main);
+	get_module_address();
 
 	*(API**)((Byte*)&_api + module_address) = api;
-	
-	if(api->process.number_of_arguments < 2) {
-		goto error;
-	}
-	
-	if(!compare_null_terminated_bytes(api->process.arguments[1], "string" + module_address)) {
-		if(api->process.number_of_arguments < 3) {
-			goto error;
-		}
-		
-		print("%s" + module_address, api->process.arguments[2]);
-	}
-	else if(!compare_null_terminated_bytes(api->process.arguments[1], "dir" + module_address)) {
-		print_directory(api);
-	}
-	else if(!compare_null_terminated_bytes(api->process.arguments[1], "file" + module_address)) {
-		if(api->process.number_of_arguments < 3) {
-			goto error;
-		}
-	
-		print_file(api, api->process.arguments[2]);
-	} 
-	else {
-		goto error;
-	}
-	
-	return;
-	
-	error: {
-		api->console.print(
-			"usage:"
-			"\n\tload string <string>"
-			"\n\tload dir"
-			"\n\tload file <file_name>"
-			+ module_address
-		);
-	}
+	main(api->process.number_of_arguments, api->process.arguments);
 }
 
 
+#include <memory.c>
 #include <writer.c>
 
 
 void print(Byte* parameters, ...)
 {
-	get_module_address(print);
+	get_module_address();
 	API* api = *(API**)((Byte*)&_api + module_address);
 	
 	print_in_source(0, api->pipe.write_character, parameters, &parameters + 1);
 }
 
 
+void print_error(Byte* parameters, ...)
+{
+	get_module_address();
+	API* api = *(API**)((Byte*)&_api + module_address);
+	
+	print_in_source(0, api->display.text.write_character, parameters, &parameters + 1);
+}
+
+
 void print_directory(API* api)
 {
-	get_module_address(print_directory);
+	get_module_address();
 	
 	File_Enumerator enumerator;
 	Boolean         is_many_files;
@@ -94,12 +64,12 @@ void print_directory(API* api)
 
 void print_file(API* api, Byte* file_name)
 {
-	get_module_address(print_file);
+	get_module_address();
 	
 	FAT_Data file;
 	
 	if(!api->file.open(&file, file_name)) {
-		api->console.print("file %s not found" + module_address, file_name);
+		print_error("file %s not found" + module_address, file_name);
 		return;
 	}
 	
@@ -145,4 +115,72 @@ void print_file(API* api, Byte* file_name)
 }
 
 
-#include <memory.c>
+void print_process(Process* process)
+{
+	get_module_address();
+	
+	print("%s addr=%d ESP=%d EBP=%d" + module_address, process->api->process.arguments[0], process, process->esp, process->ebp);
+}
+
+
+Number main(Number number_of_arguments, Byte** arguments)
+{
+	get_module_address();
+	API* api = *(API**)((Byte*)&_api + module_address);
+	
+	if(number_of_arguments < 2) {
+		goto error;
+	}
+	
+	if(!compare_null_terminated_bytes(arguments[1], "file" + module_address)) {
+		if(number_of_arguments < 3) {
+			goto error;
+		}
+	
+		print_file(api, arguments[2]);
+	}
+	else if(!compare_null_terminated_bytes(arguments[1], "string" + module_address)) {
+		if(number_of_arguments < 3) {
+			goto error;
+		}
+		
+		print("%s" + module_address, arguments[2]);
+	}
+	else if(!compare_null_terminated_bytes(arguments[1], "dir" + module_address)) {
+		print_directory(api);
+	}
+	else if(!compare_null_terminated_bytes(arguments[1], "processes" + module_address)) {
+		Process* first_process;
+		Process* process;
+		
+		first_process = api->process.get_first();
+		process = first_process;
+		
+		while(process) {
+			if(process != first_process) {
+				print("\n" + module_address);
+			}
+			
+			print_process(process);
+			process = process->next;
+		}
+	}
+	else {
+		goto error;
+	}
+	
+	return 0;
+	
+	error: {
+		print_error(
+			"usage:"
+			"\n\tload file <file_name>"
+			"\n\tload string <string>"
+			"\n\tload dir"
+			"\n\tload processes"
+			+ module_address
+		);
+	}
+	
+	return 1;
+}

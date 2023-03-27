@@ -9,4 +9,7 @@ BelOS runned in qemu.
 ![screenshot](https://github.com/Alexey1994/BelOS/raw/main/binary/BIOS32/screenshots/3.png)
 Ported NES emulator from [here](https://github.com/ObaraEmmanuel/NES)
 
-To buld BelOS copy all files from utils folder in project folder and run build.bat script.
+![screenshot](https://github.com/Alexey1994/BelOS/raw/main/binary/BIOS32/screenshots/4.png)
+Begins of graphics shell.
+
+To build BelOS copy all files from utils.zip in project folder and run build.bat script.

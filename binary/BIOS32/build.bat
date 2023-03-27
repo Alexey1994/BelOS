@@ -8,6 +8,7 @@
 	&& ld -T kernel_script.ld -o "bin/components/kernel32.o" "bin/components/kernel32.elf" ^
 	&& objcopy -O binary -S "bin/components/kernel32.o" "bin/components/kernel" ^
 	&& build_COM_program.bat "shell" ^
+	&& build_COM_program.bat "shell2" ^
 	&& build_COM_program.bat "load" ^
 	&& build_COM_program.bat "store" ^
 	&& build_COM_program.bat "reset" ^
@@ -16,6 +17,7 @@
 	&& create MBR 2097664 "bin/components/MBR" > "bin/storage" && create FAT32 "bin/storage" "bin/components/FAT32" ^
 		"bin/components/kernel" "KERNEL" ^
 		"bin/components/shell" "SHELL   COM" ^
+		"bin/components/shell2" "SHELL2  COM" ^
 		"bin/components/test.exe" "TEST    EXE" ^
 		"components/programs/NES/NES.exe" "NES     EXE" ^
 		"bin/components/load" "LOAD    COM" ^

@@ -204,7 +204,9 @@ IDT_pointer:
 use32
 empty_interrupt_handler:
 	pusha
-	out_8 0x20, 0x20
+	mov AL, 0x20
+	out 0x20, AL
+	out 0xA0, AL
 	popa
 	iret
 

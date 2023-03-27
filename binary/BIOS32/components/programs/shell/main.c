@@ -94,6 +94,8 @@ Number main(Number number_of_arguments, Byte** arguments)
 	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
 	
 	
+	api->display.text.set_mode();
+	
 	shell->process = api->process.get_first();
 	while(shell->process->api != api) {
 		shell->process = shell->process->next;

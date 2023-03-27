@@ -423,7 +423,7 @@ void interrupt_33_handler()
 		}
 		
 		if(on_key_input_handler && char_code) {
-			on_key_input_handler(char_code);	
+			on_key_input_handler(char_code);
 		}
 	}
 }

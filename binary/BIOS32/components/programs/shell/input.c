@@ -1,8 +1,8 @@
 void put_command_char(Byte char_code)
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	Shell* shell = global_ptr(_shell);
+	Pipe_Interface* pipe_interface = global(_pipe_interface);
 	
 	
 	Number i;
@@ -23,7 +23,7 @@ void put_command_char(Byte char_code)
 	++shell->command_size;
 	
 	//print("%c" + module_address, char_code);
-	api->pipe.write_character(0, char_code);
+	pipe_interface->write_character(0, char_code);
 
 	++shell->cursor_pos_x;
 }
@@ -35,8 +35,8 @@ void put_command_char(Byte char_code)
 void get_prompt()
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	Shell* shell = global_ptr(_shell);
+	File_Interface* file_interface = global(_file_interface);
 	
 	
 	Byte   prompt[256];
@@ -66,7 +66,7 @@ void get_prompt()
 	enumerator.cluster_offset = 0;
 	enumerator.file_number    = 0;
 	
-	while(api->file.enumerate(&enumerator)) {
+	while(file_interface->enumerate(&enumerator)) {
 		if(!compare_bytes(enumerator.file_data->name, prompt_size, prompt, prompt_size)) {
 			Byte   promted_file_name[12];
 			Number promted_file_name_size = 0;
@@ -99,8 +99,9 @@ void get_prompt()
 void on_key_down(Byte key_code, Boolean is_special)
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	API* api = global(_api);
+	Shell* shell = global_ptr(_shell);
+	Text_Display_Interface* text_display_interface = global(_text_display_interface);
 	
 	
 	if(is_special) {
@@ -112,7 +113,7 @@ void on_key_down(Byte key_code, Boolean is_special)
 				
 				--shell->cursor_pos_x;
 				
-				api->display.text.set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
+				text_display_interface->set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
 				
 				break;
 			}
@@ -124,7 +125,7 @@ void on_key_down(Byte key_code, Boolean is_special)
 				
 				++shell->cursor_pos_x;
 				
-				api->display.text.set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
+				text_display_interface->set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
 
 				break;
 			}
@@ -139,18 +140,18 @@ void on_key_down(Byte key_code, Boolean is_special)
 				}
 				
 				shell->cursor_pos_x = 1;
-				api->display.text.set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
+				text_display_interface->set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
 				shell->command_size = 0;
 				
 				Number i;
 				
 				//clear line
 				for(i = 1; i < 79; ++i) {
-					api->display.text.write_character(0, ' ');
+					text_display_interface->write_character(0, ' ');
 				}
 				
 				shell->cursor_pos_x = 1;
-				api->display.text.set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
+				text_display_interface->set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
 				
 				for(i = 0; i < 64 && shell->stored_commands[shell->current_stored_command * 64 + i]; ++i) {
 					put_command_char(shell->stored_commands[shell->current_stored_command * 64 + i]);
@@ -171,18 +172,18 @@ void on_key_down(Byte key_code, Boolean is_special)
 				}
 				
 				shell->cursor_pos_x = 1;
-				api->display.text.set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
+				text_display_interface->set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
 				shell->command_size = 0;
 				
 				Number i;
 				
 				//clear line
 				for(i = 1; i < 79; ++i) {
-					api->display.text.write_character(0, ' ');
+					text_display_interface->write_character(0, ' ');
 				}
 				
 				shell->cursor_pos_x = 1;
-				api->display.text.set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
+				text_display_interface->set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
 				
 				for(i = 0; i < 64 && shell->stored_commands[shell->current_stored_command * 64 + i]; ++i) {
 					put_command_char(shell->stored_commands[shell->current_stored_command * 64 + i]);
@@ -211,7 +212,7 @@ void on_key_down(Byte key_code, Boolean is_special)
 					text_display[shell->cursor_pos_y * 80 + i] = text_display[shell->cursor_pos_y * 80 + i + 1];
 				}
 
-				api->display.text.set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
+				text_display_interface->set_cursor_position(shell->cursor_pos_x, shell->cursor_pos_y);
 				
 				--shell->command_size;
 				

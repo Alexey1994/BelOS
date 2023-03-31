@@ -3,6 +3,11 @@
 
 API* _api;
 
+Pipe_Interface* _pipe_interface;
+File_Interface* _file_interface;
+Process_Interface* _process_interface;
+Text_Display_Interface* _text_display_interface;
+
 
 Number main(Number number_of_arguments, Byte** arguments);
 
@@ -11,8 +16,14 @@ void start(API* api)
 {
 	get_module_address();
 
-	*(API**)((Byte*)&_api + module_address) = api;
-	main(api->process.number_of_arguments, api->process.arguments);
+	global(_api) = api;
+	
+	global(_pipe_interface) = api->get("pipe" + module_address);
+	global(_file_interface) = api->get("file" + module_address);
+	global(_process_interface) = api->get("process" + module_address);
+	global(_text_display_interface) = api->get("display/text" + module_address);
+	
+	main(api->number_of_arguments, api->arguments);
 }
 
 
@@ -23,24 +34,26 @@ void start(API* api)
 void print(Byte* parameters, ...)
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
+	Pipe_Interface* pipe_interface = global(_pipe_interface);
 	
-	print_in_source(0, api->pipe.write_character, parameters, &parameters + 1);
+	print_in_source(0, pipe_interface->write_character, parameters, &parameters + 1);
 }
 
 
 void print_error(Byte* parameters, ...)
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
+	Text_Display_Interface* text_display_interface = global(_text_display_interface);
 	
-	print_in_source(0, api->display.text.write_character, parameters, &parameters + 1);
+	print_in_source(0, text_display_interface->write_character, parameters, &parameters + 1);
 }
 
 
 void print_directory(API* api)
 {
 	get_module_address();
+	File_Interface* file_interface = global(_file_interface);
+	
 	
 	File_Enumerator enumerator;
 	Boolean         is_many_files;
@@ -51,7 +64,7 @@ void print_directory(API* api)
 	enumerator.cluster_offset = 0;
 	enumerator.file_number    = 0;
 	
-	while(api->file.enumerate(&enumerator)) {
+	while(file_interface->enumerate(&enumerator)) {
 		if(is_many_files) {
 			print("\n" + module_address);
 		}
@@ -65,10 +78,12 @@ void print_directory(API* api)
 void print_file(API* api, Byte* file_name)
 {
 	get_module_address();
+	File_Interface* file_interface = global(_file_interface);
+	
 	
 	FAT_Data file;
 	
-	if(!api->file.open(&file, file_name)) {
+	if(!file_interface->open(&file, file_name)) {
 		print_error("file %s not found" + module_address, file_name);
 		return;
 	}
@@ -80,7 +95,7 @@ void print_file(API* api, Byte* file_name)
 	Number i;
 
 	/*
-	while(api->file.read_sector(&file, sector)) {
+	while(file_interface->read_sector(&file, sector)) {
 		for(i = 0; i < 512; ++i) {
 			api->console.print("%c", sector[i]);
 		}
@@ -88,7 +103,7 @@ void print_file(API* api, Byte* file_name)
 	
 	last_sector = sector1;
 	
-	if(api->file.read_sector(&file, last_sector)) {
+	if(file_interface->read_sector(&file, last_sector)) {
 		for(;;) {
 			previous_sector = last_sector;
 			
@@ -99,7 +114,7 @@ void print_file(API* api, Byte* file_name)
 				last_sector = sector1;
 			}
 			
-			if(!api->file.read_sector(&file, last_sector)) {
+			if(!file_interface->read_sector(&file, last_sector)) {
 				break;
 			}
 			
@@ -119,14 +134,16 @@ void print_process(Process* process)
 {
 	get_module_address();
 	
-	print("%s addr=%d ESP=%d EBP=%d" + module_address, process->api->process.arguments[0], process, process->esp, process->ebp);
+	print("%s addr=%d ESP=%d EBP=%d" + module_address, process->api->arguments[0], process, process->esp, process->ebp);
 }
 
 
 Number main(Number number_of_arguments, Byte** arguments)
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
+	API* api = global(_api);
+	Process_Interface* process_interface = global(_process_interface);
+	
 	
 	if(number_of_arguments < 2) {
 		goto error;
@@ -153,7 +170,7 @@ Number main(Number number_of_arguments, Byte** arguments)
 		Process* first_process;
 		Process* process;
 		
-		first_process = api->process.get_first();
+		first_process = process_interface->get_first();
 		process = first_process;
 		
 		while(process) {

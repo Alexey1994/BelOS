@@ -89,45 +89,6 @@ Byte   ps2_mouse_packet[3];
 Number ps2_mouse_packet_index;
 
 
-void initialize_ps2_mouse()
-{
-	Byte command;
-	
-	out_8(0x64, PS2_DISABLE_MOUSE_INTERFACE);
-	
-	//reset mouse
-	out_8(0x64, PS2_WRITE_IN_MOUSE_DEVICE);
-	if(!write_data_in_ps2(PS2_MOUSE_SET_DEFAULTS)) {
-		return;
-	}
-	if(!ps2_mouse_acknowledge()) {
-		return;
-	}
-	
-	//enable streaming
-	out_8(0x64, PS2_WRITE_IN_MOUSE_DEVICE);
-	if(!write_data_in_ps2(PS2_MOUSE_ENABLE_STREAMING)) {
-		return;
-	}
-	if(!ps2_mouse_acknowledge()) {
-		return;
-	}
-
-	//enable IRQ12
-	asm("cli");
-	ps2_mouse_packet_index = 0;
-	out_8(0x64, PS2_READ_COMMAND_BYTE);
-	command = in_8(0x60);
-	command |= PS2_ENABLE_MOUSE_INPUT_BUFFER_FULL_INTERRUPT;
-	command &= ~PS2_DISABLE_MOUSE;
-	out_8(0x64, PS2_WRITE_COMMAND_BYTE);
-	write_data_in_ps2(command);
-	asm("sti");
-	
-	out_8(0x64, PS2_ENABLE_MOUSE_INTERFACE);
-}
-
-
 asm("pusha");
 asm("call interrupt_44_handler");
 asm("mov $0x20, %al");
@@ -150,5 +111,56 @@ void interrupt_44_handler()
 		//);
 		
 		ps2_mouse_packet_index = 0;
+	}
+}
+
+
+Boolean initialize_ps2_mouse()
+{
+	Byte command;
+	
+	out_8(0x64, PS2_DISABLE_MOUSE_INTERFACE);
+	
+	//reset mouse
+	out_8(0x64, PS2_WRITE_IN_MOUSE_DEVICE);
+	if(!write_data_in_ps2(PS2_MOUSE_SET_DEFAULTS)) {
+		goto error;
+	}
+	if(!ps2_mouse_acknowledge()) {
+		goto error;
+	}
+	
+	//enable streaming
+	out_8(0x64, PS2_WRITE_IN_MOUSE_DEVICE);
+	if(!write_data_in_ps2(PS2_MOUSE_ENABLE_STREAMING)) {
+		goto error2;
+	}
+	if(!ps2_mouse_acknowledge()) {
+		goto error2;
+	}
+	
+	//enable IRQ12
+	asm("cli");
+	loader_api->set_interrupt_handler((Number)&interrupt_44_handler - 14, 44);
+	ps2_mouse_packet_index = 0;
+	out_8(0x64, PS2_READ_COMMAND_BYTE);
+	command = in_8(0x60);
+	command |= PS2_ENABLE_MOUSE_INPUT_BUFFER_FULL_INTERRUPT;
+	command &= ~PS2_DISABLE_MOUSE;
+	out_8(0x64, PS2_WRITE_COMMAND_BYTE);
+	write_data_in_ps2(command);
+	asm("sti");
+	
+	
+	out_8(0x64, PS2_ENABLE_MOUSE_INTERFACE);
+	
+	return 1;
+	
+	error2: {
+		loader_api->clean_interrupt_handler(44);
+	}
+	
+	error: {
+		return 0;
 	}
 }

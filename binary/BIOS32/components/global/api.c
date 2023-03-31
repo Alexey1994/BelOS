@@ -12,72 +12,99 @@
 
 
 typedef struct {
-	struct {
-		void* (*allocate) (Number block_size);
-		void  (*free)     (void* block);
-	}
-	heap;
+	Boolean           is_exist;
+	struct Interface* next;
+	Byte              name[32];
+	Boolean           is_folder;
+	void*             data;
+}
+Interface;
+
+
+typedef struct {
+	void* (*allocate) (Number block_size);
+	void  (*free)     (void* block);
+}
+Heap_Interface;
+
+
+typedef struct {
+	Boolean (*enumerate)   (File_Enumerator* enumerator);
+	Boolean (*open)        (FAT_Data* file, Byte* name);
+	Number  (*read_sector) (FAT_Data* file, Byte* sector);
+}
+File_Interface;
+
+
+typedef struct {
+	struct Process* (*get_first) ();
+	struct Process* (*create)    (Byte* command, struct Process* previous_piping_process);
+	void            (*switch_to) (struct Process* process);
+	Boolean         (*execute)   (Byte* command);
+	void            (*sleep)     (Number milliseconds);
+	void            (*exit)      (Number code);
+}
+Process_Interface;
+
+
+typedef struct {
+	//Number (*read)(Byte* buffer, Number size_of_buffer);
+	//Number (*write)(Byte* buffer, Number size_of_buffer);
+	Number (*read_character)(Byte* source);
+	void (*write_character)(Byte* source, Number character);
+}
+Pipe_Interface;
+
+
+typedef struct {
+	Number  (*get_number_of_modes) ();
+	Boolean (*get_mode_info)       (Number mode_index, Pixel_Mode* mode);
+	Boolean (*set_mode)            (Number mode_index);
+}
+Pixel_Display_Interface;
+
+
+typedef struct {
+	Number (*get_cursor_position_x) ();
+	Number (*get_cursor_position_y) ();
+	Number (*get_text_color)        ();
+	Number (*get_background_color)  ();
+	void   (*set_mode)              ();
+	void   (*set_cursor_position)   (Number x, Number y);
+	void   (*set_text_color)        (Number color);
+	void   (*set_background_color)  (Number color);
+	void   (*write_character)       (Byte* display, Number character);
+}
+Text_Display_Interface;
+
+
+typedef struct {
+	Number (*read_character)       (Byte* keyboard);
+	void   (*set_key_down_handler) (void(*key_down_handler)(Byte key_code, Boolean is_special));
+	void   (*set_key_up_handler)   (void(*key_up_handler)(Byte key_code, Boolean is_special));
+}
+Keyboard_Interface;
+
+
+typedef struct {
 	
-	struct {
-		Boolean (*enumerate)   (File_Enumerator* enumerator);
-		Boolean (*open)        (FAT_Data* file, Byte* name);
-		Number  (*read_sector) (FAT_Data* file, Byte* sector);
-	}
-	file;
+}
+Mouse_Interface;
+
+
+typedef struct {
+	void* (*get)(Byte* path);
 	
-	struct {
-		struct Process* (*get_first) ();
-		struct Process* (*create)    (Byte* command, struct Process* previous_piping_process);
-		void            (*switch_to) (struct Process* process);
-		Boolean         (*execute)   (Byte* command);
-		void            (*sleep)     (Number milliseconds);
-		void            (*exit)      (Number code);
-		
-		Byte   command[256];
-		Number number_of_arguments;
-		Byte*  arguments[MAX_NUMBER_OF_ARGUMENTS];
-	}
-	process;
+	//maybe will use it in kernel modules
+	//Interface* (*open_root_interface)     ();
+	//Interface* (*open_interface)          (Interface* parent_interface, Byte* name);
+	//Interface* (*create_interface)        (Interface* parent_interface, Byte* name, void* data);
+	//Interface* (*create_interface_folder) (Interface* parent_interface, Byte* name);
+	//void       (*delete_interface)        (Interface* parent_interface, Byte* name);
 	
-	struct {
-		//Number (*read)(Byte* buffer, Number size_of_buffer);
-		//Number (*write)(Byte* buffer, Number size_of_buffer);
-		Number (*read_character)(Byte* source);
-		void (*write_character)(Byte* source, Number character);
-	}
-	pipe;
-	
-	struct {
-		struct {
-			Number  (*get_number_of_modes) ();
-			Boolean (*get_mode_info)       (Number mode_index, Pixel_Mode* mode);
-			Boolean (*set_mode)            (Number mode_index);
-		}
-		pixel;
-		
-		struct {
-			Number (*get_cursor_position_x) ();
-			Number (*get_cursor_position_y) ();
-			Number (*get_text_color)        ();
-			Number (*get_background_color)  ();
-			void   (*set_mode)              ();
-			void   (*set_cursor_position)   (Number x, Number y);
-			void   (*set_text_color)        (Number color);
-			void   (*set_background_color)  (Number color);
-			void   (*write_character)       (Byte* display, Number character);
-		}
-		text;
-	}
-	display;
-	
-	struct {
-		Number (*read_character)       (Byte* keyboard);
-		void   (*set_key_down_handler) (void(*key_down_handler)(Byte key_code, Boolean is_special));
-		void   (*set_key_up_handler)   (void(*key_up_handler)(Byte key_code, Boolean is_special));
-	}
-	keyboard;
-	
-	void (*reset) ();
+	Number number_of_arguments;
+	Byte*  arguments[MAX_NUMBER_OF_ARGUMENTS];
+	Byte   command[256];
 }
 API;
 
@@ -113,6 +140,9 @@ Process;
 #define CURRENT_PROCESS_POINTER_ADDRESS (65536)
 #define get_module_address() \
 	Number module_address = (*(*((Process***)CURRENT_PROCESS_POINTER_ADDRESS)))->start;
+
+#define global(name) *(void**)((Byte*)&name + module_address)
+#define global_ptr(name) ((Byte*)&name + module_address)
 
 
 #endif//API_INCLUDED

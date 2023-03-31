@@ -3,6 +3,9 @@
 
 API* _api;
 
+Process_Interface* _process_interface;
+Pixel_Display_Interface* _pixel_display_interface;
+
 
 Number main(Number number_of_arguments, Byte** arguments);
 
@@ -11,8 +14,12 @@ void start(API* api)
 {
 	get_module_address();
 	
-	*(API**)((Byte*)&_api + module_address) = api;
-	main(api->process.number_of_arguments, api->process.arguments);
+	global(_api) = api;
+	
+	global(_process_interface) = api->get("process" + module_address);
+	global(_pixel_display_interface) = api->get("display/pixel" + module_address);
+	
+	main(api->number_of_arguments, api->arguments);
 }
 
 
@@ -133,20 +140,21 @@ Shell _shell = {
 Boolean set_pixel_mode()
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	API* api = global(_api);
+	Shell* shell = global_ptr(_shell);
+	Pixel_Display_Interface* pixel_display_interface = global(_pixel_display_interface);
 	
 	
 	Number     number_of_modes;
 	Number     i;
 	
-	number_of_modes = api->display.pixel.get_number_of_modes();
+	number_of_modes = pixel_display_interface->get_number_of_modes();
 	
 	for(i = 0; i < number_of_modes; ++i) {
-		api->display.pixel.get_mode_info(i, &shell->mode);
+		pixel_display_interface->get_mode_info(i, &shell->mode);
 		
 		if(shell->mode.width == 640 && shell->mode.height == 480 && shell->mode.bits_per_pixel >= 24) {
-			api->display.pixel.set_mode(i);
+			pixel_display_interface->set_mode(i);
 			return 1;
 		}
 	}
@@ -158,7 +166,7 @@ Boolean set_pixel_mode()
 void draw_rectangle(Number x, Number y, Number width, Number height, Number color)
 {
 	get_module_address();
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	Shell* shell = global_ptr(_shell);
 	
 	
 	Byte*  line;
@@ -212,7 +220,7 @@ void draw_rectangle(Number x, Number y, Number width, Number height, Number colo
 void draw_glyph(Number x, Number y, Byte* glyph, Number width, Number height, Number32 color)
 {
 	get_module_address();
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	Shell* shell = global_ptr(_shell);
 	
 	
 	Byte*  line;
@@ -274,7 +282,7 @@ void draw_glyph(Number x, Number y, Byte* glyph, Number width, Number height, Nu
 void draw_character(Byte character, Number x, Number y, Number32 color)
 {
 	get_module_address();
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	Shell* shell = global_ptr(_shell);
 	
 	
 	if(character < ' ' || character > '~') {
@@ -307,8 +315,8 @@ void print_character(Shell* shell, Number character)
 void print(Byte* parameters, ...)
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	API* api = global(_api);
+	Shell* shell = global_ptr(_shell);
 	
 	
 	print_in_source(shell, &print_character + module_address, parameters, &parameters + 1);
@@ -318,8 +326,8 @@ void print(Byte* parameters, ...)
 Number main(Number number_of_arguments, Byte** arguments)
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	API* api = global(_api);
+	Shell* shell = global_ptr(_shell);
 	
 	
 	if(!set_pixel_mode()) {

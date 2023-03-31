@@ -325,9 +325,9 @@ Process* create_process(Byte* command, Process* previous_piping_process)
 	
 	Number i;
 	for(i = 0; command[i]; ++i) {
-		process->api->process.command[i] = command[i];
+		process->api->command[i] = command[i];
 	}
-	process->api->process.command[i] = '\0';
+	process->api->command[i] = '\0';
 	
 	return process;
 }
@@ -350,12 +350,12 @@ Boolean execute_command(Byte* command)
 		
 		previous_piping_process = process;
 		
-		command = process->api->process.command;
+		command = process->api->command;
 		
 		arguments_size = parse_arguments(
 			command,
-			&process->api->process.arguments,
-			&process->api->process.number_of_arguments
+			&process->api->arguments,
+			&process->api->number_of_arguments
 		);
 		
 		if(command[arguments_size] != '|') {

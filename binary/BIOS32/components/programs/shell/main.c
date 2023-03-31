@@ -3,6 +3,13 @@
 
 API* _api;
 
+Heap_Interface* _heap_interface;
+Pipe_Interface* _pipe_interface;
+File_Interface* _file_interface;
+Process_Interface* _process_interface;
+Text_Display_Interface* _text_display_interface;
+Keyboard_Interface* _keyboard_interface;
+
 
 Number main(Number number_of_arguments, Byte** arguments);
 
@@ -11,8 +18,16 @@ void start(API* api)
 {
 	get_module_address();
 	
-	*(API**)((Byte*)&_api + module_address) = api;
-	main(api->process.number_of_arguments, api->process.arguments);
+	global(_api) = api;
+	
+	global(_heap_interface) = api->get("heap" + module_address);
+	global(_pipe_interface) = api->get("pipe" + module_address);
+	global(_file_interface) = api->get("file" + module_address);
+	global(_process_interface) = api->get("process" + module_address);
+	global(_text_display_interface) = api->get("display/text" + module_address);
+	global(_keyboard_interface) = api->get("keyboard" + module_address);
+
+	main(api->number_of_arguments, api->arguments);
 }
 
 
@@ -22,9 +37,9 @@ void start(API* api)
 void print(Byte* parameters, ...)
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
+	Pipe_Interface* pipe_interface = global(_pipe_interface);
 	
-	print_in_source(0, api->pipe.write_character, parameters, &parameters + 1);
+	print_in_source(0, pipe_interface->write_character, parameters, &parameters + 1);
 }
 
 
@@ -57,7 +72,7 @@ Shell _shell;
 void store_command(Byte* command)
 {
 	get_module_address();
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	Shell* shell = global_ptr(_shell);
 	
 	
 	Number i;
@@ -90,38 +105,43 @@ void store_command(Byte* command)
 Number main(Number number_of_arguments, Byte** arguments)
 {
 	get_module_address();
-	API* api = *(API**)((Byte*)&_api + module_address);
-	Shell* shell = (Shell*)((Byte*)&_shell + module_address);
+	API* api = global(_api);
+	Shell* shell = global_ptr(_shell);
+	Heap_Interface* heap_interface = global(_heap_interface);
+	Process_Interface* process_interface = global(_process_interface);
+	Pipe_Interface* pipe_interface = global(_pipe_interface);
+	Text_Display_Interface* text_display_interface = global(_text_display_interface);
+	Keyboard_Interface* keyboard_interface = global(_keyboard_interface);
+
+
+	text_display_interface->set_mode();
 	
-	
-	api->display.text.set_mode();
-	
-	shell->process = api->process.get_first();
+	shell->process = process_interface->get_first();
 	while(shell->process->api != api) {
 		shell->process = shell->process->next;
 	}
 	
-	shell->initial_heap_value = api->heap.allocate(0);
+	shell->initial_heap_value = heap_interface->allocate(0);
 	shell->command[0] = '\0';
 	shell->command_size = 0;
 	shell->number_of_stored_commands = 0;
 	shell->current_stored_command = 0;
 	
 	
-	api->display.text.set_text_color(10);
+	text_display_interface->set_text_color(10);
 	print(">" + module_address);
-	api->display.text.set_text_color(15);
+	text_display_interface->set_text_color(15);
 	
-	shell->cursor_pos_x = api->display.text.get_cursor_position_x();
-	shell->cursor_pos_y = api->display.text.get_cursor_position_y();
+	shell->cursor_pos_x = text_display_interface->get_cursor_position_x();
+	shell->cursor_pos_y = text_display_interface->get_cursor_position_y();
 	
-	api->keyboard.set_key_down_handler(&on_key_down + module_address);
+	keyboard_interface->set_key_down_handler(&on_key_down + module_address);
 	
 	for(;;) {
 		Number character;
 		
-		character = api->pipe.read_character(0);
-		//api->pipe.write_character(0, character);
+		character = pipe_interface->read_character(0);
+		//pipe_interface->write_character(0, character);
 		
 		
 		if(character == '\n') {
@@ -150,24 +170,24 @@ Number main(Number number_of_arguments, Byte** arguments)
 				
 				//print("%s" + module_address, shell->command);
 				
-				api->display.text.set_text_color(7);
+				text_display_interface->set_text_color(7);
 				
 				shell->process->next = 0;
-				api->heap.free(shell->initial_heap_value);
+				heap_interface->free(shell->initial_heap_value);
 				store_command(shell->command);
-				api->keyboard.set_key_down_handler(0);
-				api->process.execute(shell->command);
+				keyboard_interface->set_key_down_handler(0);
+				process_interface->execute(shell->command);
 				
-				api->display.text.set_mode();
-				api->display.text.set_text_color(15);
-				api->keyboard.set_key_down_handler(&on_key_down + module_address);
+				text_display_interface->set_mode();
+				text_display_interface->set_text_color(15);
+				keyboard_interface->set_key_down_handler(&on_key_down + module_address);
 				
 				print("\n" + module_address);
 			}
 			
-			api->display.text.set_text_color(10);
+			text_display_interface->set_text_color(10);
 			print(">" + module_address);
-			api->display.text.set_text_color(15);
+			text_display_interface->set_text_color(15);
 		}
 		else if(character == '\t') {
 			get_prompt();

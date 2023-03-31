@@ -6,6 +6,6 @@ import extern API* api;
 
 void _start(API* api)
 {
-	api->display.text.write_character(0, 'H');
-	api->display.text.write_character(0, 'i');
+	((Text_Display_Interface*)api->get("display/text"))->write_character(0, 'H');
+	((Text_Display_Interface*)api->get("display/text"))->write_character(0, 'i');
 }

@@ -1,10 +1,4 @@
-#include <API.c>
-#include "API/heap.c"
-#include "API/display.c"
-#include "API/file.c"
-#include "API/keyboard.c"
-#include "API/process.c"
-#include "API/pipe.c"
+#include <memory.c>
 
 
 #define FIRST_INTERFACE_ADDRESS (65536 * 2)
@@ -170,6 +164,44 @@ Interface* get_interface(Byte* path)
 }
 
 
+void create_interface_by_path(Byte* path, void* data)
+{
+	Interface* root;
+	Byte       name[32];
+	Number     i;
+	
+	root = open_root_interface();
+	
+	while(*path) {
+		if(*path == '/') {
+			++path;
+		}
+
+		for(i = 0; i < sizeof(name) - 1 && *path && *path != '/'; ++i) {
+			name[i] = *path;
+			++path;
+		}
+		name[i] = '\0';
+		
+		if(*path == '/') {
+			root = open_interface(root, name);
+			
+			if(!root) {
+				root = create_interface_folder(root, name);
+			}
+			//TODO: maybe error for incompatible types
+			//else if(!root->is_folder) {
+			//	
+			//}
+		}
+		else {
+			create_interface(root, name, data);
+			break;
+		}
+	}
+}
+
+
 void* get_interface_data(Byte* path)
 {
 	Interface* interface;
@@ -184,6 +216,14 @@ void* get_interface_data(Byte* path)
 }
 
 
+#include <API.c>
+#include "API/heap.c"
+#include "API/display.c"
+#include "API/file.c"
+#include "API/process.c"
+#include "API/pipe.c"
+
+
 Heap_Interface heap_interface = {
 	.allocate = &allocate_memory,
 	.free = &free_memory
@@ -191,9 +231,10 @@ Heap_Interface heap_interface = {
 
 
 File_Interface file_interface = {
-	.enumerate   = &enum_files,
-	.open        = &open_file,
-	.read_sector = &read_file_sector
+	.enumerate      = &enum_files,
+	.open_directory = &open_directory,
+	.open           = &open_file,
+	.read_sector    = &read_file_sector
 };
 
 
@@ -212,6 +253,12 @@ Pipe_Interface pipe_interface = {
 	//.write = &write_in_pipe,
 	.read_character = &read_character_from_pipe,
 	.write_character = &write_character_in_pipe
+};
+
+
+Interrupt_Interface interrupt_interface = {
+	.set = 0,
+	.clean = 0
 };
 
 
@@ -235,18 +282,6 @@ Text_Display_Interface text_display_interface = {
 };
 
 
-Keyboard_Interface keyboard_interface = {
-	.read_character       = &read_character_from_keyboard_with_wait,
-	.set_key_down_handler = &set_key_down_handler,
-	.set_key_up_handler   = &set_key_up_handler
-};
-
-
-Mouse_Interface mouse_interface = {
-	
-};
-
-
 void initialize_interfaces()
 {
 	clean_bytes(FIRST_INTERFACE_ADDRESS, sizeof(Interface) * MAX_NUMBER_OF_INTERFACES);
@@ -260,19 +295,17 @@ void initialize_interfaces()
 	create_interface(root_interface, "process", &process_interface);
 	create_interface(root_interface, "pipe", &pipe_interface);
 	
+	interrupt_interface.set = loader_api->set_interrupt_handler;
+	interrupt_interface.clean = loader_api->clean_interrupt_handler;
+	create_interface(root_interface, "interrupt", &interrupt_interface);
+	
+	
 	Interface* display_interface;
 	display_interface = create_interface_folder(root_interface, "display");
 	create_interface(display_interface, "pixel", &pixel_display_interface);
 	create_interface(display_interface, "text", &text_display_interface);
 	
-	create_interface(root_interface, "keyboard", &keyboard_interface);
-	
 	create_interface(root_interface, "reset", loader_api->reset);
-	
-	
-	if(initialize_ps2_mouse()) {
-		create_interface(root_interface, "mouse", &mouse_interface);
-	}
 	
 	
 	//print_interfaces(open_root_interface(), 0);
@@ -282,4 +315,6 @@ void initialize_interfaces()
 void initialize_program_api(API* api)
 {
 	api->get = &get_interface_data;
+	api->create = &create_interface_by_path;
+	api->wait = &wait;
 }

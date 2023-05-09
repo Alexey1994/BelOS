@@ -129,7 +129,7 @@ Number main(Number number_of_arguments, Byte** arguments)
 	
 	
 	text_display_interface->set_text_color(10);
-	print(">" + module_address);
+	print("\n>" + module_address);
 	text_display_interface->set_text_color(15);
 	
 	shell->cursor_pos_x = text_display_interface->get_cursor_position_x();

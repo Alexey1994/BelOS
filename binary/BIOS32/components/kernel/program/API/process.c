@@ -85,6 +85,7 @@ void switch_to_process(Process* process)
 void exit(Number code)
 {
 	if(!current_process->started) {
+		print("wtf? exit from not started process\n");
 		return;
 	}
 	
@@ -329,6 +330,11 @@ Process* create_process(Byte* command, Process* previous_piping_process)
 	}
 	process->api->command[i] = '\0';
 	
+	process->waiting = 0;
+	process->next_process_in_event_queue = 0;
+	process->events = 0;
+	process->last_event = 0;
+	
 	return process;
 }
 
@@ -372,4 +378,123 @@ Boolean execute_command(Byte* command)
 	switch_to_process(process);
 	
 	return 1;
+}
+
+
+Process* first_event_queue_process = 0;
+Process* last_event_queue_process = 0;
+
+
+void check_events(Number dispatched_event, ...)
+{
+	Process** waiting_process_pointer;
+	
+	waiting_process_pointer = &first_event_queue_process;
+	
+	while(*waiting_process_pointer) {
+		Number* events;
+		
+		//print("check %s\n", (*waiting_process_pointer)->api->command);
+		
+		events = (*waiting_process_pointer)->events;
+		
+		if(!events) {
+			print("wtf? need events\n");
+			break;
+		}
+		
+		while(*events) {
+			if(*events == dispatched_event) {
+				switch(*events) {
+					case TIMER_EVENT: {
+						//print("%d %d\n", events[1], (&dispatched_event)[1]);
+						
+						if(events[1] <= (&dispatched_event)[1]) {
+							print("done\n");
+							
+							/*if(current_process != *waiting_process_pointer) {
+								print("switch to process here\n");
+							}
+							else {
+								
+							}*/
+							switch_to_process(*waiting_process_pointer);
+							
+							if(!(*waiting_process_pointer)->next_process_in_event_queue) {
+								last_event_queue_process = 0;
+								print("here");
+							}
+							
+							(*waiting_process_pointer)->last_event = *events;
+							(*waiting_process_pointer)->events = 0;
+							(*waiting_process_pointer)->waiting = 0;
+							*waiting_process_pointer = (*waiting_process_pointer)->next_process_in_event_queue;
+							
+							return;
+						}
+						
+						break;
+					}
+				}
+			}
+			
+			switch(*events) {
+				case TIMER_EVENT: {
+					++events;
+					//print("wait %dms\n", *events);
+					break;
+				}
+			}
+			
+			++events;
+		}
+		
+		waiting_process_pointer = &(*waiting_process_pointer)->next_process_in_event_queue;
+	}
+}
+
+
+//Number wait(Number* events, Number number_of_events)
+Number wait(Number first_event, ...)
+{
+	Number* events;
+	
+	events = &first_event;
+	current_process->events = events;
+	current_process->waiting = 1;
+	
+	while(*events) {
+		switch(*events) {
+			case TIMER_EVENT: {
+				++events;
+				
+				print("wait %dms\n", *events);
+				*events += number_of_ticks;
+				break;
+			}
+		}
+		
+		++events;
+	}
+	
+	//current_process->next_process_in_event_queue = first_event_queue_process;
+	//first_event_queue_process = current_process;
+	if(!last_event_queue_process) {
+		last_event_queue_process = current_process;
+		first_event_queue_process = current_process;
+	}
+	else {
+		last_event_queue_process->next = current_process;
+		last_event_queue_process = current_process;
+	}
+	
+	if(current_process->next && !current_process->next_piping_process) {
+		switch_to_process(current_process->next);
+	}
+	
+	while(current_process->waiting) {
+		asm("hlt");
+	}
+	
+	return current_process->last_event;
 }

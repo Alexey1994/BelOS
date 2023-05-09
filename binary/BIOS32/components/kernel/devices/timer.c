@@ -26,6 +26,9 @@ void set_timer_frequency_divider(Number timer_number, Number divider)
 }
 
 
+void check_events(Number dispatched_event, ...);
+
+
 asm("pusha");
 asm("call interrupt_32_handler");
 asm("mov $0x20, %al");
@@ -35,6 +38,8 @@ asm("iret");
 void interrupt_32_handler()
 {
 	++number_of_ticks;
+	
+	check_events(TIMER_EVENT, number_of_ticks);
 }
 
 

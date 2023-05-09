@@ -3,6 +3,38 @@
 
 
 typedef enum {
+	/*CHAR_BACKSPACE = 8,
+	CHAR_TAB = 9,
+	CHAR_ENTER = 10,
+	CHAR_SHIFT = 16,
+	CHAR_CONTROL = 17,
+	CHAR_ALT = 18,
+	CHAR_CAPS_LOCK = 20,
+	CHAR_ESCAPE = 27,
+	
+	CHAR_F1 = 112,
+	CHAR_F2 = 113,
+	CHAR_F3 = 114,
+	CHAR_F4 = 115,
+	CHAR_F5 = 116,
+	CHAR_F6 = 117,
+	CHAR_F7 = 118,
+	CHAR_F8 = 119,
+	CHAR_F9 = 120,
+	CHAR_F10 = 121,
+	CHAR_F11 = 122,
+	CHAR_F12 = 123,
+	
+	CHAR_NUM_LOCK = 144,
+	CHAR_SCROLL_LOCK = 145,*/
+	
+	CHAR_TAB = '\t',
+	CHAR_ENTER = '\n',
+}
+Character;
+
+
+typedef enum {
 	KEY_ESCAPE = 1,
 	
 	KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0, KEY_MINUS, KEY_EQUAL, KEY_BACKSPACE,

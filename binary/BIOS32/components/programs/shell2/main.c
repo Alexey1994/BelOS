@@ -3,8 +3,10 @@
 
 API* _api;
 
+Heap_Interface* _heap_interface;
 Process_Interface* _process_interface;
 Pixel_Display_Interface* _pixel_display_interface;
+Mouse_Interface* _mouse_interface;
 
 
 Number main(Number number_of_arguments, Byte** arguments);
@@ -16,8 +18,10 @@ void start(API* api)
 	
 	global(_api) = api;
 	
+	global(_heap_interface) = api->get("heap" + module_address);
 	global(_process_interface) = api->get("process" + module_address);
 	global(_pixel_display_interface) = api->get("display/pixel" + module_address);
+	global(_mouse_interface) = api->get("mouse" + module_address);
 	
 	main(api->number_of_arguments, api->arguments);
 }
@@ -25,10 +29,15 @@ void start(API* api)
 
 typedef struct {
 	Pixel_Mode mode;
+	Number32*  canvas;
 	Byte       glyphs_8_16[95][128];
 	Number     cursor_pos_x;
 	Number     cursor_pos_y;
 	Number32   text_color;
+	
+	Signed_Number mouse_x;
+	Signed_Number mouse_y;
+	Number32      mouse_layer_copy[10 * 10];
 }
 Shell;
 
@@ -139,7 +148,7 @@ Shell _shell = {
 
 Boolean set_pixel_mode()
 {
-	get_module_address();
+	get_module_address_by_function(set_pixel_mode);
 	API* api = global(_api);
 	Shell* shell = global_ptr(_shell);
 	Pixel_Display_Interface* pixel_display_interface = global(_pixel_display_interface);
@@ -163,9 +172,123 @@ Boolean set_pixel_mode()
 }
 
 
+void draw_canvas()
+{
+	get_module_address_by_function(draw_canvas);
+	Shell* shell = global_ptr(_shell);
+	
+	
+	Number    x;
+	Number    y;
+	Number    line_width;
+	Number    number_of_lines;
+	Number32* canvas_line;
+	Byte*     framebuffer_line;
+	
+	line_width = shell->mode.width;
+	number_of_lines = shell->mode.height;
+	canvas_line = shell->canvas;
+	framebuffer_line = shell->mode.framebuffer;
+	
+	if(shell->mode.bits_per_pixel == 32) {
+		for(y = 0; y < number_of_lines; ++y) {
+			for(x = 0; x < line_width; ++x) {
+				((Number32*)framebuffer_line)[x] = canvas_line[x];
+			}
+			
+			canvas_line += shell->mode.width;
+			framebuffer_line = framebuffer_line + shell->mode.pitch;
+		}
+	}
+	else if(shell->mode.bits_per_pixel == 24) {
+		for(y = 0; y < number_of_lines; ++y) {
+			Byte* source_pixel = canvas_line;
+			Byte* destination_pixel = framebuffer_line;
+			
+			for(x = 0; x < line_width; ++x) {
+				destination_pixel[0] = source_pixel[0];
+				destination_pixel[1] = source_pixel[1];
+				destination_pixel[2] = source_pixel[2];
+				
+				source_pixel += 4;
+				destination_pixel += 3;
+			}
+			
+			canvas_line += shell->mode.width;
+			framebuffer_line = framebuffer_line + shell->mode.pitch;
+		}
+	}
+}
+
+
 void draw_rectangle(Number x, Number y, Number width, Number height, Number color)
 {
-	get_module_address();
+	get_module_address_by_function(draw_rectangle);
+	Shell* shell = global_ptr(_shell);
+	
+	
+	Byte*  line;
+	Number line_width;
+	Number number_of_lines;
+	Number i;
+	Number j;
+	
+	if(x >= shell->mode.width || y >= shell->mode.height) {
+		return;
+	}
+	
+	line_width = x + width < shell->mode.width
+		? width
+		: shell->mode.width - x;
+	number_of_lines = y + height < shell->mode.height
+		? height
+		: shell->mode.height - y;
+	
+	/*
+	if(shell->mode.bits_per_pixel == 24) {
+		Byte b = color & 0xFF;
+		Byte g = (color >> 8) & 0xFF;
+		Byte r = (color >> 16) & 0xFF;
+		
+		for(i = 0; i < number_of_lines; ++i) {
+			line = shell->mode.framebuffer + (y + i) * shell->mode.pitch + x * 3;
+			
+			for(j = 0; j < line_width; ++j) {
+				line[0] = b;
+				line[1] = g;
+				line[2] = r;
+				
+				line += 3;
+			}
+		}
+	}
+	else if(shell->mode.bits_per_pixel == 32) {
+		for(i = 0; i < number_of_lines; ++i) {
+			line = shell->mode.framebuffer + (y + i) * shell->mode.pitch + x * 4;
+			
+			for(j = 0; j < line_width; ++j) {
+				*(Number32*)line = color;
+				
+				line += 4;
+			}
+		}
+	}*/
+		
+	for(i = 0; i < number_of_lines; ++i) {
+		line = shell->canvas + (y + i) * shell->mode.width + x;
+			
+		for(j = 0; j < line_width; ++j) {
+			*(Number32*)line = color;
+			
+			line += 4;
+		}
+	}
+}
+
+
+void draw_rectangle_in_framebuffer(Number x, Number y, Number width, Number height, Number color)
+{
+	get_module_address_by_function(draw_rectangle_in_framebuffer);
 	Shell* shell = global_ptr(_shell);
 	
 	
@@ -219,7 +342,7 @@ void draw_rectangle(Number x, Number y, Number width, Number height, Number colo
 
 void draw_glyph(Number x, Number y, Byte* glyph, Number width, Number height, Number32 color)
 {
-	get_module_address();
+	get_module_address_by_function(draw_glyph);
 	Shell* shell = global_ptr(_shell);
 	
 	
@@ -244,7 +367,7 @@ void draw_glyph(Number x, Number y, Byte* glyph, Number width, Number height, Nu
 	Byte g = (color >> 8) & 0xFF;
 	Byte r = (color >> 16) & 0xFF;
 	Byte a = (color >> 24) & 0xFF;
-	
+	/*
 	if(shell->mode.bits_per_pixel == 24) {
 		for(i = 0; i < number_of_lines; ++i) {
 			line = shell->mode.framebuffer + (y + i) * shell->mode.pitch + x * 3;
@@ -275,13 +398,28 @@ void draw_glyph(Number x, Number y, Byte* glyph, Number width, Number height, Nu
 				line += 4;
 			}
 		}
+	}*/
+	
+	for(i = 0; i < number_of_lines; ++i) {
+		line = shell->canvas + (y + i) * shell->mode.width + x;
+			
+		for(j = 0; j < line_width; ++j) {
+			Byte glyph_pixel = glyph[i * width + j];
+				
+			line[0] = glyph_pixel * b / 255;
+			line[1] = glyph_pixel * g / 255;
+			line[2] = glyph_pixel * r / 255;
+			line[3] = glyph_pixel * a / 255;
+				
+			line += 4;
+		}
 	}
 }
 
 
 void draw_character(Byte character, Number x, Number y, Number32 color)
 {
-	get_module_address();
+	get_module_address_by_function(draw_character);
 	Shell* shell = global_ptr(_shell);
 	
 	
@@ -314,7 +452,7 @@ void print_character(Shell* shell, Number character)
 
 void print(Byte* parameters, ...)
 {
-	get_module_address();
+	get_module_address_by_function(print);
 	API* api = global(_api);
 	Shell* shell = global_ptr(_shell);
 	
@@ -323,16 +461,225 @@ void print(Byte* parameters, ...)
 }
 
 
-Number main(Number number_of_arguments, Byte** arguments)
+void update_mouse_layer()
 {
-	get_module_address();
-	API* api = global(_api);
+	get_module_address_by_function(update_mouse_layer);
 	Shell* shell = global_ptr(_shell);
 	
 	
-	if(!set_pixel_mode()) {
-		return 1;
+	Number x = shell->mouse_x / 2;
+	Number y = shell->mouse_y / 2;
+	Number i;
+	Number j;
+	Byte*  line;
+	Number line_width = 10;
+	Number number_of_lines = 10;
+	
+	/*if(shell->mode.bits_per_pixel == 24) {
+		for(i = 0; i < number_of_lines; ++i) {
+			line = shell->mode.framebuffer + (y + i) * shell->mode.pitch + x * 3;
+			
+			for(j = 0; j < line_width; ++j) {
+				shell->mouse_layer_copy[i * 10 + j] = line[0] | (line[1] << 8) | (line[2] << 16);
+				
+				line += 3;
+			}
+		}
 	}
+	else if(shell->mode.bits_per_pixel == 32) {
+		for(i = 0; i < number_of_lines; ++i) {
+			line = shell->mode.framebuffer + (y + i) * shell->mode.pitch + x * 4;
+			
+			for(j = 0; j < line_width; ++j) {
+				shell->mouse_layer_copy[i * 10 + j] = *(Number32*)line;//line[0] | (line[1] << 8) | (line[2] << 16);
+				
+				line += 4;
+			}
+		}
+	}*/
+	
+	for(i = 0; i < number_of_lines; ++i) {
+		line = shell->canvas + (y + i) * shell->mode.width + x;
+			
+		for(j = 0; j < line_width; ++j) {
+			shell->mouse_layer_copy[i * 10 + j] = *(Number32*)line;
+			
+			line += 4;
+		}
+	}
+}
+
+
+void hide_mouse()
+{
+	get_module_address_by_function(hide_mouse);
+	Shell* shell = global_ptr(_shell);
+	
+	
+	Number x = shell->mouse_x / 2;
+	Number y = shell->mouse_y / 2;
+	Number i;
+	Number j;
+	Byte*  line;
+	Number line_width = 10;
+	Number number_of_lines = 10;
+	
+	if(shell->mode.bits_per_pixel == 24) {
+		for(i = 0; i < number_of_lines; ++i) {
+			line = shell->mode.framebuffer + (y + i) * shell->mode.pitch + x * 3;
+			
+			for(j = 0; j < line_width; ++j) {
+				Number32 color = shell->mouse_layer_copy[i * 10 + j];
+				Byte b = color & 0xFF;
+				Byte g = (color >> 8) & 0xFF;
+				Byte r = (color >> 16) & 0xFF;
+				
+				line[0] = b;
+				line[1] = g;
+				line[2] = r;
+				//shell->mouse_layer_copy[i * 10 + j] = line[0] | (line[1] << 8) | (line[2] << 16);
+				
+				line += 3;
+			}
+		}
+	}
+	else if(shell->mode.bits_per_pixel == 32) {
+		for(i = 0; i < number_of_lines; ++i) {
+			line = shell->mode.framebuffer + (y + i) * shell->mode.pitch + x * 4;
+			
+			for(j = 0; j < line_width; ++j) {
+				//shell->mouse_layer_copy[i * 10 + j] = *(Number32*)line;//line[0] | (line[1] << 8) | (line[2] << 16);
+				
+				*(Number32*)line = shell->mouse_layer_copy[i * 10 + j];
+				
+				line += 4;
+			}
+		}
+	}
+	
+	for(i = 0; i < number_of_lines; ++i) {
+		line = shell->canvas + (y + i) * shell->mode.width + x;
+			
+		for(j = 0; j < line_width; ++j) {
+			*(Number32*)line = shell->mouse_layer_copy[i * 10 + j];
+				
+			line += 4;
+		}
+	}
+}
+
+
+void show_mouse()
+{
+	get_module_address_by_function(show_mouse);
+	Shell* shell = global_ptr(_shell);
+
+
+	Number mouse_x;
+	Number mouse_y;
+	
+	mouse_x = shell->mouse_x / 2;
+	mouse_y = shell->mouse_y / 2;
+
+	//draw_rectangle(mouse_x, mouse_y, 10, 10, 0xFFFFFF);
+	//draw_rectangle(mouse_x + 1, mouse_y + 1, 10 - 1, 10 - 1, 0x000000);
+	
+	draw_rectangle(mouse_x, mouse_y, 10, 1, 0xFFFFFF);
+	draw_rectangle(mouse_x, mouse_y, 1, 10, 0xFFFFFF);
+	
+	draw_rectangle(mouse_x + 1, mouse_y + 1, 9, 1, 0x000000); //0x888888
+	draw_rectangle(mouse_x + 1, mouse_y + 1, 1, 9, 0x000000);
+	
+	draw_rectangle(mouse_x + 2, mouse_y + 2, 8, 1, 0xFFFFFF);
+	draw_rectangle(mouse_x + 2, mouse_y + 2, 1, 8, 0xFFFFFF);
+	
+	draw_rectangle(mouse_x + 3, mouse_y + 3, 7, 1, 0x000000); //0x888888
+	draw_rectangle(mouse_x + 3, mouse_y + 3, 1, 7, 0x000000);
+	
+	
+	draw_rectangle_in_framebuffer(mouse_x, mouse_y, 10, 1, 0xFFFFFF);
+	draw_rectangle_in_framebuffer(mouse_x, mouse_y, 1, 10, 0xFFFFFF);
+	
+	draw_rectangle_in_framebuffer(mouse_x + 1, mouse_y + 1, 9, 1, 0x000000); //0x888888
+	draw_rectangle_in_framebuffer(mouse_x + 1, mouse_y + 1, 1, 9, 0x000000);
+	
+	draw_rectangle_in_framebuffer(mouse_x + 2, mouse_y + 2, 8, 1, 0xFFFFFF);
+	draw_rectangle_in_framebuffer(mouse_x + 2, mouse_y + 2, 1, 8, 0xFFFFFF);
+	
+	draw_rectangle_in_framebuffer(mouse_x + 3, mouse_y + 3, 7, 1, 0x000000); //0x888888
+	draw_rectangle_in_framebuffer(mouse_x + 3, mouse_y + 3, 1, 7, 0x000000);
+}
+
+
+void mouse_handler(Mouse_Event* event)
+{
+	get_module_address_by_function(mouse_handler);
+	Shell* shell = global_ptr(_shell);
+	
+	
+	//shell->text_color = 0xABCDEF;
+	//print("%d " + module_address, shell->mouse_y);
+	
+	hide_mouse();
+	
+	
+	shell->mouse_x += event->x;
+	
+	if(shell->mouse_x < 0) {
+		shell->mouse_x = 0;
+	}
+	else if(shell->mouse_x >= shell->mode.width * 2) {
+		shell->mouse_x = (shell->mode.width - 1) * 2;
+	}
+	
+	
+	shell->mouse_y -= event->y;
+	
+	if(shell->mouse_y < 0) {
+		shell->mouse_y = 0;
+	}
+	else if(shell->mouse_y >= shell->mode.height * 2) {
+		shell->mouse_y = (shell->mode.height - 1) * 2;
+	}
+	
+	
+	/*shell->cursor_pos_x = 1;
+	shell->cursor_pos_y = 28;
+	print("Hi from color shell" + module_address);
+	shell->text_color *= 5;*/
+	
+	
+	update_mouse_layer();
+	show_mouse();
+	
+	//draw_canvas();
+}
+
+void add_mouse_handler()
+{
+	get_module_address_by_function(add_mouse_handler);
+	Shell* shell = global_ptr(_shell);
+	Mouse_Interface* mouse_interface = global(_mouse_interface);
+	
+	
+	if(!mouse_interface) {
+		return;
+	}
+	
+	mouse_interface->set_handler(global_ptr(mouse_handler));
+}
+
+
+void draw_scene()
+{
+	get_module_address_by_function(draw_scene);
+	Shell* shell = global_ptr(_shell);
+	
+	
+	asm("cli");
+	//hide_mouse();
+	//draw_rectangle(0, 0, shell->mode.width, shell->mode.height, 0xFFFFFF);
+	
 	
 	draw_rectangle(100, 100, 100, 100, 0x0000FF);
 	draw_rectangle(50, 50, 100, 100, 0x00FF00);
@@ -343,7 +690,8 @@ Number main(Number number_of_arguments, Byte** arguments)
 	draw_character('l', 316, 300, 0x00FFFF);
 	draw_character('l', 324, 300, 0xFFFF00);
 	
-	shell->text_color = 0xABCDEF;
+	
+	/*shell->text_color = 0xABCDEF;
 	for(;;) {
 		shell->cursor_pos_x = 1;
 		shell->cursor_pos_y = 28;
@@ -351,7 +699,49 @@ Number main(Number number_of_arguments, Byte** arguments)
 		shell->text_color *= 5;
 		
 		asm("hlt");
+	}*/
+	
+	shell->cursor_pos_x = 1;
+	shell->cursor_pos_y = 28;
+	print("Hi from color shell" + module_address);
+	shell->text_color *= 5;
+	
+	show_mouse();
+	draw_canvas();
+	
+	//update_mouse_layer();
+	show_mouse();
+	asm("sti");
+}
+
+
+Number main(Number number_of_arguments, Byte** arguments)
+{
+	get_module_address_by_function(main);
+	API* api = global(_api);
+	Shell* shell = global_ptr(_shell);
+	Heap_Interface* heap_interface = global(_heap_interface);
+	
+	
+	if(!set_pixel_mode()) {
+		return 1;
 	}
+	
+	shell->canvas = heap_interface->allocate(shell->mode.width * shell->mode.height * 4);
+	
+	shell->mouse_x = shell->mode.width * 2 / 2;
+	shell->mouse_y = shell->mode.height * 2 / 2;
+	add_mouse_handler();
+	
+	shell->text_color = 0xABCDEF;
+	draw_scene();
+	for(;;) {
+		draw_scene();
+		//asm("hlt");
+		api->wait(TIMER_EVENT, 3333, 0);
+	}
+	
+	//draw_scene();
 	
 	return 0;
 }

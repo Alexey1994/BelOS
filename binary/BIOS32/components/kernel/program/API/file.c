@@ -22,6 +22,16 @@ Boolean enum_files(File_Enumerator* enumerator)
 }
 
 
+Boolean open_directory(Byte* name)
+{
+	if(name[0] == '/') {
+		open_root();
+	}
+	
+	return open_FAT_directory(&fs, name);
+}
+
+
 Boolean open_file(FAT_Data* file, Byte* name)
 {
 	return open_FAT_file(&fs, file, name);

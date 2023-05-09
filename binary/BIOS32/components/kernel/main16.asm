@@ -211,7 +211,6 @@ empty_interrupt_handler:
 	iret
 
 
-;handler must be in first 64kb of RAM
 use32
 set_interrupt_handler:
 	cli
@@ -221,10 +220,14 @@ set_interrupt_handler:
 	mov EAX, [ESP + 8]
 	shl EAX, 3
 	add EBX, EAX
+	; EBX = IDT + interrupt_number * 8
 	
 	mov EAX, [ESP + 4]
+	; EAX = interrupt_handler
 
 	mov [EBX], AX
+	shr EAX, 16
+	mov [EBX + 6], AX
 
 	sti
 	ret

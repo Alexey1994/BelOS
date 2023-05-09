@@ -15,7 +15,7 @@ Number main(Number number_of_arguments, Byte** arguments);
 void start(API* api)
 {
 	get_module_address();
-
+	
 	global(_api) = api;
 	
 	global(_pipe_interface) = api->get("pipe" + module_address);

@@ -6,9 +6,16 @@
 #include "file.c"
 #include "display.c"
 #include "keyboard.c"
+#include "mouse.c"
 
 
 #define MAX_NUMBER_OF_ARGUMENTS 256
+
+
+typedef enum {
+	TIMER_EVENT = 1
+}
+Event;
 
 
 typedef struct {
@@ -29,9 +36,10 @@ Heap_Interface;
 
 
 typedef struct {
-	Boolean (*enumerate)   (File_Enumerator* enumerator);
-	Boolean (*open)        (FAT_Data* file, Byte* name);
-	Number  (*read_sector) (FAT_Data* file, Byte* sector);
+	Boolean (*enumerate)      (File_Enumerator* enumerator);
+	Boolean (*open_directory) (Byte* name);
+	Boolean (*open)           (FAT_Data* file, Byte* name);
+	Number  (*read_sector)    (FAT_Data* file, Byte* sector);
 }
 File_Interface;
 
@@ -54,6 +62,13 @@ typedef struct {
 	void (*write_character)(Byte* source, Number character);
 }
 Pipe_Interface;
+
+
+typedef struct {
+	void  (*set)   (void(*handler)(), Number32 interrupt_number);
+	void  (*clean) (Number32 interrupt_number);
+}
+Interrupt_Interface;
 
 
 typedef struct {
@@ -87,13 +102,14 @@ Keyboard_Interface;
 
 
 typedef struct {
-	
+	void (*set_handler) (void (*mouse_handler)(Mouse_Event* event));
 }
 Mouse_Interface;
 
 
 typedef struct {
 	void* (*get)(Byte* path);
+	void  (*create)(Byte* path, void* data);
 	
 	//maybe will use it in kernel modules
 	//Interface* (*open_root_interface)     ();
@@ -105,6 +121,9 @@ typedef struct {
 	Number number_of_arguments;
 	Byte*  arguments[MAX_NUMBER_OF_ARGUMENTS];
 	Byte   command[256];
+	
+	
+	Number (*wait) (Number first_event, ...);
 }
 API;
 
@@ -133,13 +152,26 @@ typedef struct {
 	Boolean next_piping_process_stopped;
 	Number  previous_character;
 	Boolean has_character;
+	
+	Boolean         waiting;
+	struct Process* next_process_in_event_queue;
+	Number*         events; //null terminated
+	//Number          number_of_events;
+	Number          last_event;
 }
 Process;
 
 
+//!!!DEPRECATED not compatible with interrupts, use get_module_address_by_function
 #define CURRENT_PROCESS_POINTER_ADDRESS (65536)
+
 #define get_module_address() \
 	Number module_address = (*(*((Process***)CURRENT_PROCESS_POINTER_ADDRESS)))->start;
+
+#define get_module_address_by_function(function) \
+	Number module_address; \
+	asm("call . + 5\n" "pop %0" : "=a"(module_address)); \
+	module_address -= (Number)&(function) + 15;
 
 #define global(name) *(void**)((Byte*)&name + module_address)
 #define global_ptr(name) ((Byte*)&name + module_address)

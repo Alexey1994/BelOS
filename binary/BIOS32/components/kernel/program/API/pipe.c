@@ -154,7 +154,18 @@ Number read_character_from_pipe(Byte* source)
 		}
 		
 		//print("[ret from read]\n");
-		return read_character_from_keyboard_with_wait(0);
+		//return read_character_from_keyboard_with_wait(source);
+		Keyboard_Interface* keyboard_interface;
+		keyboard_interface = get_interface_data("keyboard");
+		
+		if(keyboard_interface) {
+			return keyboard_interface->read_character(source);
+		}
+		else {
+			for(;;) {
+				asm("hlt");
+			}
+		}
 	}
 }
 

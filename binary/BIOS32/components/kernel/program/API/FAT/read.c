@@ -6,6 +6,29 @@
 #include <string.c>
 
 
+void FAT_name_to_normal_name(Byte fat_name[11], Byte normal_name[13])
+{
+	Number i;
+	
+	for(i = 0; i < 8 && fat_name[i] != ' '; ++i) {
+		*normal_name = to_lower_case(fat_name[i]);
+		++normal_name;
+	}
+	
+	if(fat_name[8] != ' ') {
+		*normal_name = '.';
+		++normal_name;
+		
+		for(i = 8; i < 11 && fat_name[i] != ' '; ++i) {
+			*normal_name = to_lower_case(fat_name[i]);
+			++normal_name;
+		}
+	}
+	
+	*normal_name = '\0';
+}
+
+
 Boolean enum_FAT_data(FAT_File_System* fs, File_Enumerator* enumerator)
 {
 	if(enumerator->data_cluster == 0x0FFFFFFF) {

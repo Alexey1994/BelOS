@@ -102,13 +102,13 @@ void interrupt_44_handler()
 	++ps2_mouse_packet_index;
 	
 	if(ps2_mouse_packet_index == 3) {
-		//print(
-		//	"lb%d "
-		//	"rb%d "
-		//	"\n",
-		//	!!(ps2_mouse_packet[0] & 0b00000001),
-		//	!!(ps2_mouse_packet[0] & 0b00000010)
-		//);
+		print(
+			"lb%d "
+			"rb%d "
+			"\n",
+			!!(ps2_mouse_packet[0] & 0b00000001),
+			!!(ps2_mouse_packet[0] & 0b00000010)
+		);
 		
 		ps2_mouse_packet_index = 0;
 	}

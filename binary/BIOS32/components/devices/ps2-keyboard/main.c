@@ -6,6 +6,7 @@ API* _api;
 Pipe_Interface* _pipe_interface;
 Text_Display_Interface* _text_display_interface;
 Interrupt_Interface* _interrupt_interface;
+Process_Interface* _process_interface;
 
 
 Number main(Number number_of_arguments, Byte** arguments);
@@ -23,6 +24,7 @@ void start(API* api)
 	global(_pipe_interface) = api->get("pipe" + module_address);
 	global(_text_display_interface) = api->get("display/text" + module_address);
 	global(_interrupt_interface) = api->get("interrupt" + module_address);
+	global(_process_interface) = api->get("process" + module_address);
 	
 	main(api->number_of_arguments, api->arguments);
 }
@@ -64,6 +66,7 @@ typedef struct {
 
 	Boolean is_special_key;
 	Boolean pressed_shift_key;
+	Boolean pressed_control_key;
 	Byte    last_character;
 	Byte    key_to_char_code[128];
 	Byte    key_to_shifted_char_code[128];
@@ -207,6 +210,7 @@ void interrupt_33_handler()
 	get_module_address_by_function(interrupt_33_handler);
 	Interrupt_Interface* interrupt_interface = global(_interrupt_interface);
 	Keyboard* keyboard = global_ptr(_keyboard);
+	Process_Interface* process_interface = global(_process_interface);
 	
 	
 	Byte key_state;
@@ -227,6 +231,14 @@ void interrupt_33_handler()
 		
 		if(key_code == KEY_LEFT_SHIFT || key_code == KEY_RIGHT_SHIFT) {
 			keyboard->pressed_shift_key = !is_up;
+		}
+		else if(key_code == KEY_LEFT_CONTROL) {
+			keyboard->pressed_control_key = !is_up;
+		}
+		else if(key_code == KEY_C) {
+			if(keyboard->pressed_control_key) {
+				process_interface->exit(1);
+			}
 		}
 		
 		if(is_up) {

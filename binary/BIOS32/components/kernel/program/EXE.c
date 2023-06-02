@@ -121,13 +121,13 @@ typedef union {
 PE_Import_Lookup_Table;
 
 
-Boolean load_EXE_program(Process* process, FAT_Data* file)
+Boolean load_EXE_program(FAT_File_System* fs, Process* process, FAT_Data* file)
 {
 	Byte* program;
 
 	program = allocate_memory(512);
 	
-	if(!read_FAT_file_sector(&fs, file, program)) {
+	if(!read_fs_file_sector(fs, file, program)) {
 		return 0;
 	}
 	
@@ -177,7 +177,7 @@ Boolean load_EXE_program(Process* process, FAT_Data* file)
 	
 	program += 512;
 	for(i = 0; i < pe_optional_header->size_of_headers / 512 - 1; ++i) {
-		if(!read_FAT_file_sector(&fs, file, program)) {
+		if(!read_fs_file_sector(fs, file, program)) {
 			return 0;
 		}
 		
@@ -202,7 +202,7 @@ Boolean load_EXE_program(Process* process, FAT_Data* file)
 		//TODO: rewind file to pe_section_header[i].raw_data
 		
 		for(j = 0; j < pe_section_header[i].raw_size; j += 512) {
-			if(!read_FAT_file_sector(&fs, file, program)) {
+			if(!read_fs_file_sector(fs, file, program)) {
 				return 0;
 			}
 			

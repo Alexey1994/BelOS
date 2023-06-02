@@ -2,6 +2,38 @@ Process* first_process = 0;
 Process* current_process = 0;
 
 
+FAT_File_System* get_fs()
+{
+	return current_process
+		? current_process->file_system
+		: &root_fs;
+}
+
+
+Boolean enum_files(File_Enumerator* enumerator)
+{
+	return enum_fs_files(get_fs(), enumerator);
+}
+
+
+Boolean open_directory(Byte* name)
+{
+	return open_fs_directory(get_fs(), name);
+}
+
+
+Boolean open_file(FAT_Data* file, Byte* name)
+{
+	return open_fs_file(get_fs(), file, name);
+}
+
+
+Number read_file_sector(FAT_Data* file, Byte* sector)
+{
+	return read_fs_file_sector(get_fs(), file, sector);
+}
+
+
 void switch_to_process(Process* process)
 {
 	if(process == current_process) {
@@ -180,16 +212,23 @@ void initialize_program_api(API* api);
 
 Boolean load_process(Process* process, Byte* command)
 {
-	Byte     program_name[13];
-	Number   program_name_size;
-	Number   extension_index;
-	FAT_Data file;
+	Byte             program_name[13];
+	Number           program_name_size;
+	Number           extension_index;
+	FAT_File_System* target_fs;
+	FAT_Data         file;
 
 	program_name_size = parse_program_name(command, program_name);
 	extension_index = get_program_name_extension_index(program_name, program_name_size);
 	
 	if(extension_index) {
-		if(!open_FAT_file(&fs,  &file, program_name)) {
+		if(current_process && open_fs_file(current_process->file_system, &file, program_name)) {
+			target_fs = current_process->file_system;
+		}
+		else if(open_fs_file(&root_fs, &file, program_name)) {
+			target_fs = &root_fs;
+		}
+		else {
 			goto not_found_error;
 		}
 		
@@ -198,7 +237,7 @@ Boolean load_process(Process* process, Byte* command)
 			to_upper_case(program_name[extension_index + 1]) == 'O' &&
 			to_upper_case(program_name[extension_index + 2]) == 'M'
 		) {
-			if(!load_COM_program(process, &file)) {
+			if(!load_COM_program(target_fs, process, &file)) {
 				goto execution_error;
 			}
 			
@@ -209,7 +248,7 @@ Boolean load_process(Process* process, Byte* command)
 			to_upper_case(program_name[extension_index + 1]) == 'X' &&
 			to_upper_case(program_name[extension_index + 2]) == 'E'
 		) {
-			if(!load_EXE_program(process, &file)) {
+			if(!load_EXE_program(target_fs, process, &file)) {
 				goto execution_error;
 			}
 			
@@ -231,8 +270,18 @@ Boolean load_process(Process* process, Byte* command)
 	program_name[program_name_size++] = 'm';
 	program_name[program_name_size] = '\0';
 	
-	if(open_FAT_file(&fs,  &file, program_name)) {
-		if(!load_COM_program(process, &file)) {
+	if(current_process && open_fs_file(current_process->file_system, &file, program_name)) {
+		target_fs = current_process->file_system;
+	}
+	else if(open_fs_file(&root_fs, &file, program_name)) {
+		target_fs = &root_fs;
+	}
+	else {
+		target_fs = 0;
+	}
+	
+	if(target_fs) {
+		if(!load_COM_program(target_fs, process, &file)) {
 			goto execution_error;
 		}
 		
@@ -243,8 +292,18 @@ Boolean load_process(Process* process, Byte* command)
 	program_name[extension_index + 1] = 'x';
 	program_name[extension_index + 2] = 'e';
 	
-	if(open_FAT_file(&fs,  &file, program_name)) {
-		if(!load_EXE_program(process, &file)) {
+	if(current_process && open_fs_file(current_process->file_system, &file, program_name)) {
+		target_fs = current_process->file_system;
+	}
+	else if(open_fs_file(&root_fs, &file, program_name)) {
+		target_fs = &root_fs;
+	}
+	else {
+		target_fs = 0;
+	}
+	
+	if(target_fs) {
+		if(!load_EXE_program(target_fs, process, &file)) {
 			goto execution_error;
 		}
 		
@@ -302,6 +361,9 @@ Process* create_process(Byte* command, Process* previous_piping_process)
 	process = allocate_memory(sizeof(Process));
 	process->next = 0;
 	process->started = 0;
+	
+	process->file_system = allocate_memory(sizeof(FAT_File_System));
+	copy_bytes(process->file_system, get_fs(), sizeof(FAT_File_System));
 	
 	process->api = allocate_memory(sizeof(API));
 	initialize_program_api(process->api);

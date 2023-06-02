@@ -50,15 +50,15 @@ typedef struct {
 	Byte*    initial_heap_value;
 	Process* process;
 	
-	Byte   command[256];
-	Number command_size;
+	Byte     command[256];
+	Number   command_size;
 	
-	Number cursor_pos_x;
-	Number cursor_pos_y;
+	Number   cursor_pos_x;
+	Number   cursor_pos_y;
 	
-	Number number_of_stored_commands;
-	Number current_stored_command;
-	Byte   stored_commands[MAX_NUMBER_OF_STORED_COMMANDS * 64];
+	Number   number_of_stored_commands;
+	Number   current_stored_command;
+	Byte     stored_commands[MAX_NUMBER_OF_STORED_COMMANDS * 64];
 }
 Shell;
 

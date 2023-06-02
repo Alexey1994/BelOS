@@ -32,14 +32,11 @@ void _start(Loader_Api api)
 
 
 #include "interfaces/IO.c"
-#include "interfaces/PCI.c"
+//#include "interfaces/PCI.c"
 //#include "interfaces/USB.c"
 
 #include "devices/timer.c"
-#include "devices/VESA.c"
 #include "devices/text display.c"
-//#include "devices/keyboard.c"
-//#include "devices/mouse.c"
 
 //#include "interfaces/USB.c"
 
@@ -64,10 +61,11 @@ void start_shell_process(Byte* name)
 }
 
 
-void load_drivers()
+void load_devices()
 {
-	open_root();
-	open_directory("DRIVERS");
+	open_fs_root(&root_fs);
+	open_fs_directory(&root_fs, "DEVICES");
+	
 	
 	File_Enumerator enumerator;
 	
@@ -76,10 +74,10 @@ void load_drivers()
 	enumerator.file_number    = 0;
 	
 	while(enum_files(&enumerator)) {
-		Byte driver_name[13];
+		Byte device_name[13];
 		
-		FAT_name_to_normal_name(enumerator.file_data->name, driver_name);
-		execute_command(driver_name);
+		FAT_name_to_normal_name(enumerator.file_data->name, device_name);
+		execute_command(device_name);
 	}
 }
 
@@ -94,22 +92,11 @@ void start_shell()
 	
 	
 	initialize_interfaces();
-	load_drivers();
+	load_devices();
 	
 	//print_interfaces(open_root_interface(), 0);
-
+	//wait(TIMER_EVENT, 5000, 0);
 	
-	/*for(;;) {
-		print("\n");
-		configure_USB_devices();
-		sleep(1000);
-	}*/
-	
-	//configure_USB_devices();
-	
-	
-	//wait(TIMER_EVENT, 5000);
-	
-	open_root();
+	open_fs_root(&root_fs);
 	start_shell_process("shell");
 }

@@ -226,6 +226,7 @@ void* get_interface_data(Byte* path)
 
 Heap_Interface heap_interface = {
 	.allocate = &allocate_memory,
+	.allocate_aligned = &allocate_aligned_memory,
 	.free = &free_memory
 };
 
@@ -234,7 +235,12 @@ File_Interface file_interface = {
 	.enumerate      = &enum_files,
 	.open_directory = &open_directory,
 	.open           = &open_file,
-	.read_sector    = &read_file_sector
+	.read_sector    = &read_file_sector,
+	
+	.enumerate_fs      = &enum_fs_files,
+	.open_fs_directory = &open_fs_directory,
+	.fs_open           = &open_fs_file,
+	.read_fs_sector    = &read_fs_file_sector
 };
 
 

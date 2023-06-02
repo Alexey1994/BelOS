@@ -92,7 +92,15 @@ Number main(Number number_of_arguments, Byte** arguments)
 	
 	File_Interface* file_interface = global(_file_interface);
 	
-	if(!file_interface->open_directory(arguments[1])) {
+	
+	Process* current_process = get_current_process();
+	
+	if(!current_process->calling_process) {
+		print_error("no parent process to open\n" + module_address);
+		goto error;
+	}
+	
+	if(!file_interface->open_fs_directory(((Process*)current_process->calling_process)->file_system, arguments[1])) {
 		print_error("%s not opened\n" + module_address, arguments[1]);
 		
 		goto error;

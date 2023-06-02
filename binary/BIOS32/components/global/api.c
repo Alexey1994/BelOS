@@ -29,8 +29,9 @@ Interface;
 
 
 typedef struct {
-	void* (*allocate) (Number block_size);
-	void  (*free)     (void* block);
+	void* (*allocate)         (Number block_size);
+	Byte* (*allocate_aligned) (Number size, Number align);
+	void  (*free)             (void* block);
 }
 Heap_Interface;
 
@@ -40,6 +41,11 @@ typedef struct {
 	Boolean (*open_directory) (Byte* name);
 	Boolean (*open)           (FAT_Data* file, Byte* name);
 	Number  (*read_sector)    (FAT_Data* file, Byte* sector);
+	
+	Boolean (*enumerate_fs)      (void* fs, File_Enumerator* enumerator);
+	Boolean (*open_fs_directory) (void* fs, Byte* name);
+	Boolean (*fs_open)           (void* fs, FAT_Data* file, Byte* name);
+	Number  (*read_fs_sector)    (void* fs, FAT_Data* file, Byte* sector);
 }
 File_Interface;
 
@@ -107,6 +113,24 @@ typedef struct {
 Mouse_Interface;
 
 
+#include <PCI.c>
+
+typedef struct {
+	Byte     (*read_byte_from_PCI_config)   (Number16 address, Number8 offset);
+	Number16 (*read_2bytes_from_PCI_config) (Number16 address, Number8 offset);
+	Number32 (*read_4bytes_from_PCI_config) (Number16 address, Number8 offset);
+	void     (*read_bytes_from_PCI_config)  (Number16 address, Number8 offset, Byte* bytes, Number8 size);
+	void     (*write_byte_in_PCI_config)    (Number16 address, Number8 offset, Byte byte);
+	void     (*write_2bytes_in_PCI_config)  (Number16 address, Number8 offset, Number16 bytes);
+	void     (*write_4bytes_in_PCI_config)  (Number16 address, Number8 offset, Number32 bytes);
+	void     (*write_bytes_in_PCI_config)   (Number16 address, Number8 offset, Byte* bytes, Number8 size);
+	Boolean  (*read_PCI_config)             (Number16 address, PCI_Config* config);
+	Number32 (*get_PCI_MMIO_address)        (PCI_Config* config, Number BAR_number);
+	Number32 (*get_PCI_IO_address)          (PCI_Config* config, Number BAR_number);
+}
+PCI_Interface;
+
+
 typedef struct {
 	void* (*get)(Byte* path);
 	void  (*create)(Byte* path, void* data);
@@ -138,6 +162,7 @@ typedef struct {
 	
 	struct Process* calling_process;
 	
+	void*         file_system;
 	API*          api;
 	Process_Start start;
 	Boolean       started;
@@ -162,9 +187,12 @@ typedef struct {
 Process;
 
 
-//!!!DEPRECATED not compatible with interrupts, use get_module_address_by_function
 #define CURRENT_PROCESS_POINTER_ADDRESS (65536)
 
+#define get_current_process() \
+	(*(*((Process***)CURRENT_PROCESS_POINTER_ADDRESS)))
+
+//!!!DEPRECATED not compatible with interrupts, use get_module_address_by_function
 #define get_module_address() \
 	Number module_address = (*(*((Process***)CURRENT_PROCESS_POINTER_ADDRESS)))->start;
 
